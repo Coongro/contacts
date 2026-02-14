@@ -1,0 +1,22 @@
+{
+  "id": "contacts",
+  "version": "0.1.0",
+  "apiVersion": "2.0",
+  "assets": {
+    "styles": [
+      "./dist/assets/tailwind.css",
+      "./dist/assets/fontawesome/css/all.min.css"
+    ]
+  },
+  "contributes": {
+    "menus": [],
+    "views": [],
+    "repositories": [
+      {
+        "module": "./dist/repositories/contact.repository.js",
+        "export": "ContactRepository",
+        "prefix": "contacts"
+      }
+    ]
+  }
+}
