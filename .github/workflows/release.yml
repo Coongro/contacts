@@ -19,9 +19,14 @@ jobs:
           node-version: 20
 
       # Los plugins se desarrollan dentro del monorepo Coongro (pnpm workspaces).
-      # En CI standalone, reemplazamos workspace:* con la versión publicada del SDK.
-      - name: Resolve workspace protocol
-        run: sed -i 's/"workspace:\*"/">=0.1.0"/g' package.json
+      # En CI standalone:
+      # - Removemos .npmrc (apunta a Verdaccio local)
+      # - Reemplazamos workspace:* con la versión del SDK publicada en Verdaccio
+      # - plugin-sdk ya está en peerDependencies, npm install lo ignora
+      - name: Prepare for standalone CI
+        run: |
+          rm -f .npmrc
+          sed -i 's/"workspace:\*"/">=0.1.0"/g' package.json
 
       - name: Install dependencies
         run: npm install
