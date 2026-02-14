@@ -1,5 +1,9 @@
 name: CI
 
+# Quality checks (typecheck, lint, format) se ejecutan localmente en el monorepo
+# donde pnpm resuelve workspace:* y el plugin-sdk está disponible.
+# Este workflow se activará cuando el SDK esté publicado en un registry accesible.
+
 on:
   push:
     branches: [main]
@@ -9,40 +13,17 @@ on:
 jobs:
   quality:
     name: Quality & Build
+    if: false # Deshabilitado hasta que @coongro/plugin-sdk esté en un registry público
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-
-      # Los plugins se desarrollan dentro del monorepo Coongro (pnpm workspaces).
-      # En CI standalone:
-      # - Removemos .npmrc (apunta a Verdaccio local)
-      # - Reemplazamos workspace:* con la versión del SDK publicada en Verdaccio
-      # - plugin-sdk ya está en peerDependencies, npm install lo ignora
+          node-version: 20
       - name: Prepare for standalone CI
         run: |
           rm -f .npmrc
           sed -i 's/"workspace:\*"/">=0.1.0"/g' package.json
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Format check
-        run: npm run format:check
-
-      - name: Build
-        run: npm run build
+      - run: npm install
+      - run: npm run quality
+      - run: npm run build

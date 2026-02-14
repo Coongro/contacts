@@ -7,41 +7,10 @@ on:
 
 jobs:
   release:
-    name: Build & Publish
+    name: Create GitHub Release
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # Los plugins se desarrollan dentro del monorepo Coongro (pnpm workspaces).
-      # En CI standalone:
-      # - Removemos .npmrc (apunta a Verdaccio local)
-      # - Reemplazamos workspace:* con la versión del SDK publicada en Verdaccio
-      # - plugin-sdk ya está en peerDependencies, npm install lo ignora
-      - name: Prepare for standalone CI
-        run: |
-          rm -f .npmrc
-          sed -i 's/"workspace:\*"/">=0.1.0"/g' package.json
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Quality check
-        run: npm run quality
-
-      - name: Build
-        run: npm run build
-
-      - name: Publish to Verdaccio
-        if: vars.VERDACCIO_URL != ''
-        run: npm publish --registry ${{ vars.VERDACCIO_URL }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.VERDACCIO_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
