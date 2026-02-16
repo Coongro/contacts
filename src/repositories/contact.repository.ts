@@ -1,5 +1,5 @@
-import { eq, and, or, ilike, isNull, sql } from 'drizzle-orm';
 import type { ModuleDatabaseAPI } from '@coongro/plugin-sdk';
+import { eq, and, or, ilike, isNull, sql, asc, desc } from 'drizzle-orm';
 
 import { contactTable } from '../schema/contact.js';
 import type { ContactRow, NewContactRow } from '../schema/contact.js';
@@ -12,6 +12,8 @@ export interface SearchParams {
   includeDeleted?: boolean;
   limit?: number;
   offset?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
 }
 
 export interface CountByTypeResult {
@@ -40,25 +42,18 @@ export class ContactRepository {
   }
 
   async create({ data }: { data: NewContactRow }): Promise<ContactRow[]> {
-    return this.db.ormQuery((tx) =>
-      tx.insert(contactTable).values(data).returning()
-    );
+    const row = { ...data, id: data.id ?? crypto.randomUUID() };
+    return this.db.ormQuery((tx) => tx.insert(contactTable).values(row).returning());
   }
 
   async update({ id, data }: { id: string; data: Partial<NewContactRow> }): Promise<ContactRow[]> {
     return this.db.ormQuery((tx) =>
-      tx
-        .update(contactTable)
-        .set(data)
-        .where(eq(contactTable.id, id))
-        .returning()
+      tx.update(contactTable).set(data).where(eq(contactTable.id, id)).returning()
     );
   }
 
   async delete({ id }: { id: string }): Promise<void> {
-    await this.db.ormQuery((tx) =>
-      tx.delete(contactTable).where(eq(contactTable.id, id))
-    );
+    await this.db.ormQuery((tx) => tx.delete(contactTable).where(eq(contactTable.id, id)));
   }
 
   // ---------------------------------------------------------------------------
@@ -90,7 +85,19 @@ export class ContactRepository {
   // Search
   // ---------------------------------------------------------------------------
 
-  async search({ query, type, tags, isActive, includeDeleted, limit, offset }: SearchParams): Promise<ContactRow[]> {
+  async search({
+    query,
+    type,
+    tags,
+    isActive,
+    includeDeleted,
+    limit,
+    offset,
+    orderBy: orderByField,
+    orderDir = 'asc',
+  }: SearchParams): Promise<ContactRow[]> {
+    // eslint-disable-next-line no-console
+    console.log('[CONTACTS-DEBUG] search called with orderBy:', orderByField, 'orderDir:', orderDir);
     return this.db.ormQuery((tx) => {
       const conditions = [];
 
@@ -106,7 +113,7 @@ export class ContactRepository {
             ilike(contactTable.email, pattern),
             ilike(contactTable.phone, pattern),
             ilike(contactTable.document_number, pattern)
-          )!
+          )
         );
       }
 
@@ -119,13 +126,36 @@ export class ContactRepository {
       }
 
       if (tags && tags.length > 0) {
-        conditions.push(sql`${contactTable.tags} ?| array[${sql.join(tags.map((t) => sql`${t}`), sql`, `)}]`);
+        conditions.push(
+          sql`${contactTable.tags} ?| array[${sql.join(
+            tags.map((t) => sql`${t}`),
+            sql`, `
+          )}]`
+        );
       }
 
       let q = tx.select().from(contactTable);
 
       if (conditions.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         q = q.where(and(...conditions)) as typeof q;
+      }
+
+      // Ordenamiento
+      const sortableColumns: Record<string, () => typeof q> = {
+        name: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.name)) as typeof q,
+        type: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.type)) as typeof q,
+        phone: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.phone)) as typeof q,
+        email: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.email)) as typeof q,
+        is_active: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.is_active)) as typeof q,
+        created_at: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.created_at)) as typeof q,
+      };
+
+      const applySorting = orderByField ? sortableColumns[orderByField] : undefined;
+      if (applySorting) {
+        q = applySorting();
+      } else {
+        q = q.orderBy(desc(contactTable.created_at)) as typeof q;
       }
 
       if (limit) {
@@ -140,7 +170,13 @@ export class ContactRepository {
     });
   }
 
-  async findByDocument({ documentType, documentNumber }: { documentType: string; documentNumber: string }): Promise<ContactRow | undefined> {
+  async findByDocument({
+    documentType,
+    documentNumber,
+  }: {
+    documentType: string;
+    documentNumber: string;
+  }): Promise<ContactRow | undefined> {
     const rows = await this.db.ormQuery((tx) =>
       tx
         .select()
@@ -199,9 +235,7 @@ export class ContactRepository {
 
   async bulkCreate({ data }: { data: NewContactRow[] }): Promise<ContactRow[]> {
     if (data.length === 0) return [];
-    return this.db.ormQuery((tx) =>
-      tx.insert(contactTable).values(data).returning()
-    );
+    return this.db.ormQuery((tx) => tx.insert(contactTable).values(data).returning());
   }
 
   // ---------------------------------------------------------------------------

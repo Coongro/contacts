@@ -1,6 +1,6 @@
 {
   "id": "contacts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "apiVersion": "2.0",
   "assets": {
     "styles": [
@@ -9,8 +9,23 @@
     ]
   },
   "contributes": {
-    "menus": [],
-    "views": [],
+    "menus": [
+      {
+        "path": "Showcase",
+        "order": 1,
+        "viewId": "contacts.showcase.open",
+        "icon": "assets/icons/contacts.svg",
+        "color": "#7DB09F"
+      }
+    ],
+    "views": [
+      {
+        "id": "contacts.showcase.open",
+        "title": "Showcase",
+        "component": "./dist/views/showcase/index.js",
+        "export": "ShowcaseView"
+      }
+    ],
     "repositories": [
       {
         "module": "./dist/repositories/contact.repository.js",
