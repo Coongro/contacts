@@ -2,7 +2,7 @@
  * Formulario de crear/editar contacto.
  * Extensible via extraFields para agregar campos específicos del bloque.
  */
-import { getHostReact } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { useContact } from '../hooks/useContact.js';
 import { useContactMutations } from '../hooks/useContactMutations.js';
@@ -10,6 +10,7 @@ import type { ContactFormProps, FieldDef } from '../types/components.js';
 import type { Contact, ContactCreateData } from '../types/contact.js';
 
 const React = getHostReact();
+const UI = getHostUI();
 const { useState, useEffect, useCallback } = React;
 
 const CONTACT_TYPES = [
@@ -124,16 +125,10 @@ export function ContactForm(props: ContactFormProps) {
   const allFields = [...BASE_FIELDS, ...extraFields].filter((f) => !hiddenSet.has(f.key));
 
   if (isEdit && loadingContact) {
-    return React.createElement(
-      'div',
-      { className: 'flex flex-col gap-4 p-4' },
-      Array.from({ length: 6 }).map((_, i) =>
-        React.createElement('div', {
-          key: i,
-          className: 'h-10 rounded-lg bg-[var(--cg-skeleton)] animate-pulse',
-        })
-      )
-    );
+    return React.createElement(UI.LoadingOverlay, {
+      variant: 'skeleton',
+      rows: 6,
+    });
   }
 
   return React.createElement(
@@ -146,13 +141,11 @@ export function ContactForm(props: ContactFormProps) {
         'div',
         { key: field.key, className: 'flex flex-col gap-1.5' },
         React.createElement(
-          'label',
-          {
-            className: 'text-sm font-medium text-[var(--cg-text)]',
-          },
+          UI.Label,
+          null,
           field.label,
           field.required &&
-            React.createElement('span', { className: 'text-[var(--cg-danger)] ml-0.5' }, '*')
+            React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
         ),
         renderField(field, formData[field.key], (v) => handleChange(field.key, v))
       )
@@ -162,22 +155,11 @@ export function ContactForm(props: ContactFormProps) {
     React.createElement(
       'div',
       { className: 'flex items-center justify-between py-2' },
-      React.createElement('span', { className: 'text-sm text-[var(--cg-text)]' }, 'Activo'),
-      React.createElement(
-        'button',
-        {
-          type: 'button',
-          onClick: () => handleChange('is_active', !formData.is_active),
-          className: `relative w-10 h-5 rounded-full transition-colors ${
-            formData.is_active ? 'bg-[var(--cg-success)]' : 'bg-[var(--cg-toggle-off)]'
-          }`,
-        },
-        React.createElement('span', {
-          className: `absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-            formData.is_active ? 'translate-x-5' : ''
-          }`,
-        })
-      )
+      React.createElement(UI.Label, null, 'Activo'),
+      React.createElement(UI.Switch, {
+        checked: !!formData.is_active,
+        onCheckedChange: (v: boolean) => handleChange('is_active', v),
+      })
     ),
 
     // Acciones
@@ -185,23 +167,21 @@ export function ContactForm(props: ContactFormProps) {
       'div',
       { className: 'flex gap-3 pt-2' },
       React.createElement(
-        'button',
+        UI.Button,
         {
           type: 'submit',
           disabled: isSaving || !formData.name,
-          className:
-            'flex-1 h-10 rounded-lg text-sm font-medium bg-[var(--cg-accent)] text-[var(--cg-text-inverse)] hover:bg-[var(--cg-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
+          className: 'flex-1',
         },
         isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear contacto'
       ),
       onCancel &&
         React.createElement(
-          'button',
+          UI.Button,
           {
             type: 'button',
+            variant: 'outline',
             onClick: onCancel,
-            className:
-              'px-6 h-10 rounded-lg text-sm border border-[var(--cg-border)] text-[var(--cg-text)] hover:bg-[var(--cg-bg-hover)] transition-colors',
           },
           'Cancelar'
         )
@@ -210,58 +190,43 @@ export function ContactForm(props: ContactFormProps) {
 }
 
 function renderField(field: FieldDef, value: unknown, onChange: (v: unknown) => void) {
-  const baseClass =
-    'w-full h-9 px-3 text-sm rounded-lg border border-[var(--cg-input-border)] bg-[var(--cg-input-bg)] text-[var(--cg-text)] placeholder:text-[var(--cg-input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--cg-border-focus)]';
-
   switch (field.type) {
     case 'select':
       return React.createElement(
-        'select',
+        UI.Select,
         {
           value: (value as string) ?? '',
-          onChange: (e: { target: { value: string } }) => onChange(e.target.value),
-          className: baseClass,
+          onValueChange: (v: string) => onChange(v),
+          placeholder: `Seleccionar ${field.label.toLowerCase()}...`,
+          clearable: !field.required,
+          debounceMs: 0,
         },
-        React.createElement('option', { value: '' }, `Seleccionar ${field.label.toLowerCase()}...`),
         (field.options ?? []).map((opt) =>
-          React.createElement('option', { key: opt.value, value: opt.value }, opt.label)
+          React.createElement(UI.SelectItem, { key: opt.value, value: opt.value }, opt.label)
         )
       );
 
     case 'textarea':
-      return React.createElement('textarea', {
+      return React.createElement(UI.Textarea, {
         value: (value as string) ?? '',
         onChange: (e: { target: { value: string } }) => onChange(e.target.value),
         placeholder: field.placeholder,
         rows: 3,
-        className: `${baseClass} h-auto py-2 resize-none`,
       });
 
     case 'toggle':
-      return React.createElement(
-        'button',
-        {
-          type: 'button',
-          onClick: () => onChange(!value),
-          className: `relative w-10 h-5 rounded-full transition-colors ${
-            value ? 'bg-[var(--cg-success)]' : 'bg-[var(--cg-toggle-off)]'
-          }`,
-        },
-        React.createElement('span', {
-          className: `absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-            value ? 'translate-x-5' : ''
-          }`,
-        })
-      );
+      return React.createElement(UI.Switch, {
+        checked: !!value,
+        onCheckedChange: (v: boolean) => onChange(v),
+      });
 
     default:
-      return React.createElement('input', {
+      return React.createElement(UI.Input, {
         type: field.type === 'phone' ? 'tel' : field.type,
         value: (value as string) ?? '',
         onChange: (e: { target: { value: string } }) => onChange(e.target.value),
         placeholder: field.placeholder,
         required: field.required,
-        className: baseClass,
       });
   }
 }

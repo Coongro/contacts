@@ -2,13 +2,15 @@
  * Tabla de contactos con búsqueda, filtros y paginación.
  * Extensible via extraColumns, extraActions, extraFilters.
  */
-import { getHostReact } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
+import { formatType } from '../lib/formatType.js';
 import { useContacts } from '../hooks/useContacts.js';
 import type { ContactsTableProps, ColumnDef } from '../types/components.js';
 import type { SortDirection } from '../types/filters.js';
 
 const React = getHostReact();
+const UI = getHostUI();
 const { useState, useCallback, useMemo } = React;
 
 // Columnas que soportan ordenamiento (deben coincidir con sortableColumns del repo)
@@ -24,25 +26,15 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
     header: 'Estado',
     render: (c) =>
       React.createElement(
-        'span',
+        UI.Badge,
         {
-          className: c.is_active
-            ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--cg-success-bg)] text-[var(--cg-success)]'
-            : 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--cg-bg-tertiary)] text-[var(--cg-text-muted)]',
+          variant: c.is_active ? 'success-soft' : 'secondary',
+          size: 'sm',
         },
         c.is_active ? 'Activo' : 'Inactivo'
       ),
   },
 ];
-
-function formatType(type: string): string {
-  const labels: Record<string, string> = {
-    person: 'Persona',
-    company: 'Empresa',
-    other: 'Otro',
-  };
-  return labels[type] ?? type;
-}
 
 export function ContactsTable(props: ContactsTableProps) {
   const {
@@ -59,7 +51,7 @@ export function ContactsTable(props: ContactsTableProps) {
     emptyMessage = 'No se encontraron contactos',
   } = props;
 
-  const { data, loading, error, setFilters, setSort, pagination, nextPage, prevPage, refetch } =
+  const { data, loading, error, setFilters, setSort, pagination, nextPage, prevPage, goToPage, refetch } =
     useContacts({
       ...initialFilters,
       pageSize,
@@ -132,23 +124,24 @@ export function ContactsTable(props: ContactsTableProps) {
     });
   }, [data, onSelectionChange]);
 
+  /** Mapeo de sort direction para TableHead */
+  const getSortDirection = (colKey: string): false | 'asc' | 'desc' | undefined => {
+    if (!SORTABLE_KEYS.has(colKey)) return undefined;
+    if (sortKey === colKey) return sortDir as 'asc' | 'desc';
+    return false;
+  };
+
+  const totalColSpan =
+    (selectable ? 1 : 0) + allColumns.length + (extraActions.length > 0 ? 1 : 0);
+
   // --- Render ---
 
   if (error) {
-    return React.createElement(
-      'div',
-      { className: 'flex flex-col items-center justify-center py-12 gap-3' },
-      React.createElement('p', { className: 'text-sm text-[var(--cg-danger)]' }, error),
-      React.createElement(
-        'button',
-        {
-          onClick: () => refetch(),
-          className:
-            'px-4 py-2 text-sm rounded-lg bg-[var(--cg-accent)] text-[var(--cg-text-inverse)] hover:bg-[var(--cg-accent-hover)] transition-colors',
-        },
-        'Reintentar'
-      )
-    );
+    return React.createElement(UI.ErrorDisplay, {
+      title: 'Error',
+      message: error,
+      onRetry: () => refetch(),
+    });
   }
 
   return React.createElement(
@@ -159,47 +152,34 @@ export function ContactsTable(props: ContactsTableProps) {
     React.createElement(
       'div',
       { className: 'flex items-center gap-3' },
+      // Busqueda con icono
       React.createElement(
         'div',
         { className: 'relative flex-1' },
-        React.createElement(
-          'svg',
-          {
-            className: 'absolute left-3 top-1/2 -translate-y-1/2 text-[var(--cg-text-muted)]',
-            width: 16,
-            height: 16,
-            viewBox: '0 0 24 24',
-            fill: 'none',
-            stroke: 'currentColor',
-            strokeWidth: 2,
-          },
-          React.createElement('circle', { cx: 11, cy: 11, r: 8 }),
-          React.createElement('path', { d: 'M21 21l-4.35-4.35' })
-        ),
-        React.createElement('input', {
+        React.createElement(UI.DynamicIcon, {
+          icon: 'Search',
+          size: 16,
+          className: 'absolute left-3 top-1/2 -translate-y-1/2 text-cg-text-muted',
+        }),
+        React.createElement(UI.Input, {
           type: 'text',
           placeholder: 'Buscar contactos...',
           value: searchValue,
           onChange: handleSearch,
-          className:
-            'w-full h-9 pl-10 pr-4 text-sm rounded-lg border border-[var(--cg-input-border)] bg-[var(--cg-input-bg)] text-[var(--cg-text)] placeholder:text-[var(--cg-input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--cg-border-focus)]',
+          className: 'pl-10',
         })
       ),
       // Filtro de tipo
       React.createElement(
-        'div',
-        { className: 'flex gap-1' },
+        UI.ButtonGroup,
+        null,
         ['', 'person', 'company', 'other'].map((type) =>
           React.createElement(
-            'button',
+            UI.ButtonGroupItem,
             {
               key: type,
+              active: activeTypeFilter === type,
               onClick: () => handleTypeFilter(type),
-              className: `px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                activeTypeFilter === type
-                  ? 'bg-[var(--cg-accent)] text-[var(--cg-text-inverse)]'
-                  : 'bg-[var(--cg-bg-secondary)] text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-tertiary)]'
-              }`,
             },
             type === '' ? 'Todos' : formatType(type)
           )
@@ -209,167 +189,134 @@ export function ContactsTable(props: ContactsTableProps) {
 
     // Tabla
     React.createElement(
-      'div',
-      { className: 'overflow-x-auto rounded-lg border border-[var(--cg-border)]' },
+      UI.Table,
+      null,
+      // Header
       React.createElement(
-        'table',
-        { className: 'w-full' },
-        // Header
+        UI.TableHeader,
+        null,
         React.createElement(
-          'thead',
+          UI.TableRow,
           null,
-          React.createElement(
-            'tr',
-            { className: 'bg-[var(--cg-bg-secondary)] border-b border-[var(--cg-border)]' },
-            selectable &&
-              React.createElement(
-                'th',
-                { className: 'w-10 p-3' },
-                React.createElement('input', {
-                  type: 'checkbox',
-                  checked: data.length > 0 && data.every((c) => selectedIds.has(c.id)),
-                  onChange: toggleAllSelection,
-                  className: 'rounded',
-                })
-              ),
-            allColumns.map((col) => {
-              const isSortable = SORTABLE_KEYS.has(col.key);
-              const isActive = sortKey === col.key;
-              const arrow = isActive ? (sortDir === 'asc' ? ' \u2191' : ' \u2193') : '';
-              return React.createElement(
-                'th',
-                {
-                  key: col.key,
-                  onClick: isSortable ? () => handleSort(col.key) : undefined,
-                  className: `text-left p-3 text-xs font-medium uppercase tracking-wider ${
-                    isSortable ? 'cursor-pointer select-none hover:text-[var(--cg-text)]' : ''
-                  } ${isActive ? 'text-[var(--cg-text)]' : 'text-[var(--cg-text-muted)]'} ${col.className ?? ''}`,
-                },
-                col.header + arrow
-              );
-            }),
-            extraActions.length > 0 &&
-              React.createElement(
-                'th',
-                {
-                  className:
-                    'w-24 p-3 text-right text-xs font-medium uppercase tracking-wider text-[var(--cg-text-muted)]',
-                },
-                'Acciones'
-              )
-          )
-        ),
-        // Body
-        React.createElement(
-          'tbody',
-          null,
-          loading
-            ? Array.from({ length: 5 }).map((_, i) =>
-                React.createElement(
-                  'tr',
-                  { key: `skeleton-${i}`, className: 'border-b border-[var(--cg-border)]' },
-                  Array.from({
-                    length:
-                      (selectable ? 1 : 0) + allColumns.length + (extraActions.length > 0 ? 1 : 0),
-                  }).map((_, j) =>
-                    React.createElement(
-                      'td',
-                      { key: j, className: 'p-3' },
-                      React.createElement('div', {
-                        className: 'h-4 rounded bg-[var(--cg-skeleton)] animate-pulse',
-                        style: { width: `${60 + Math.random() * 40}%` },
-                      })
-                    )
-                  )
-                )
-              )
-            : data.length === 0
-              ? React.createElement(
-                  'tr',
-                  null,
-                  React.createElement(
-                    'td',
-                    {
-                      colSpan:
-                        (selectable ? 1 : 0) +
-                        allColumns.length +
-                        (extraActions.length > 0 ? 1 : 0),
-                      className: 'p-12 text-center text-sm text-[var(--cg-text-muted)]',
-                    },
-                    emptyMessage
-                  )
-                )
-              : data.map((contact) =>
-                  React.createElement(
-                    'tr',
-                    {
-                      key: contact.id,
-                      onClick: () => onRowClick?.(contact),
-                      className: `border-b border-[var(--cg-border)] transition-colors ${
-                        onRowClick ? 'cursor-pointer hover:bg-[var(--cg-bg-hover)]' : ''
-                      } ${selectedIds.has(contact.id) ? 'bg-[var(--cg-accent-bg)]' : ''}`,
-                    },
-                    selectable &&
-                      React.createElement(
-                        'td',
-                        {
-                          className: 'w-10 p-3',
-                          onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
-                        },
-                        React.createElement('input', {
-                          type: 'checkbox',
-                          checked: selectedIds.has(contact.id),
-                          onChange: () => toggleSelection(contact.id),
-                          className: 'rounded',
-                        })
-                      ),
-                    allColumns.map((col) =>
-                      React.createElement(
-                        'td',
-                        {
-                          key: col.key,
-                          className: `p-3 text-sm text-[var(--cg-text)] ${col.className ?? ''}`,
-                        },
-                        col.render
-                          ? (col.render(contact) as React.ReactNode)
-                          : (((contact as unknown as Record<string, unknown>)[
-                              col.key
-                            ] as React.ReactNode) ?? '—')
-                      )
-                    ),
-                    extraActions.length > 0 &&
-                      React.createElement(
-                        'td',
-                        {
-                          className: 'p-3 text-right',
-                          onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
-                        },
-                        React.createElement(
-                          'div',
-                          { className: 'flex items-center justify-end gap-1' },
-                          extraActions
-                            .filter((a) => !a.hidden || !a.hidden(contact))
-                            .map((action, i) =>
-                              React.createElement(
-                                'button',
-                                {
-                                  key: i,
-                                  onClick: () => action.onClick(contact),
-                                  title: action.label,
-                                  className: `p-1.5 rounded-md text-xs transition-colors ${
-                                    action.variant === 'destructive'
-                                      ? 'text-[var(--cg-danger)] hover:bg-[var(--cg-danger-bg)]'
-                                      : 'text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-hover)]'
-                                  }`,
-                                },
-                                action.label
-                              )
-                            )
-                        )
-                      )
-                  )
-                )
+          selectable &&
+            React.createElement(
+              UI.TableHead,
+              { className: 'w-10' },
+              React.createElement(UI.Checkbox, {
+                checked: data.length > 0 && data.every((c) => selectedIds.has(c.id)),
+                onCheckedChange: () => toggleAllSelection(),
+              })
+            ),
+          allColumns.map((col) =>
+            React.createElement(
+              UI.TableHead,
+              {
+                key: col.key,
+                sortDirection: getSortDirection(col.key),
+                onSort: () => handleSort(col.key),
+                className: col.className,
+              },
+              col.header
+            )
+          ),
+          extraActions.length > 0 &&
+            React.createElement(
+              UI.TableHead,
+              { className: 'w-24 text-right' },
+              'Acciones'
+            )
         )
+      ),
+      // Body
+      React.createElement(
+        UI.TableBody,
+        null,
+        loading
+          ? Array.from({ length: 5 }).map((_, i) =>
+              React.createElement(
+                UI.TableRow,
+                { key: `skeleton-${i}` },
+                Array.from({ length: totalColSpan }).map((_, j) =>
+                  React.createElement(
+                    UI.TableCell,
+                    { key: j },
+                    React.createElement(UI.Skeleton, { className: 'h-4' })
+                  )
+                )
+              )
+            )
+          : data.length === 0
+            ? React.createElement(
+                UI.TableRow,
+                null,
+                React.createElement(
+                  UI.TableCell,
+                  { colSpan: totalColSpan, className: 'p-0' },
+                  React.createElement(UI.EmptyState, { title: emptyMessage })
+                )
+              )
+            : data.map((contact) =>
+                React.createElement(
+                  UI.TableRow,
+                  {
+                    key: contact.id,
+                    onClick: onRowClick ? () => onRowClick(contact) : undefined,
+                    className: `${
+                      onRowClick ? 'cursor-pointer' : ''
+                    } ${selectedIds.has(contact.id) ? 'bg-cg-accent-bg' : ''}`,
+                  },
+                  selectable &&
+                    React.createElement(
+                      UI.TableCell,
+                      {
+                        className: 'w-10',
+                        onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
+                      },
+                      React.createElement(UI.Checkbox, {
+                        checked: selectedIds.has(contact.id),
+                        onCheckedChange: () => toggleSelection(contact.id),
+                      })
+                    ),
+                  allColumns.map((col) =>
+                    React.createElement(
+                      UI.TableCell,
+                      { key: col.key, className: col.className },
+                      col.render
+                        ? (col.render(contact) as React.ReactNode)
+                        : (((contact as unknown as Record<string, unknown>)[
+                            col.key
+                          ] as React.ReactNode) ?? '—')
+                    )
+                  ),
+                  extraActions.length > 0 &&
+                    React.createElement(
+                      UI.TableCell,
+                      {
+                        className: 'text-right',
+                        onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
+                      },
+                      React.createElement(
+                        'div',
+                        { className: 'flex items-center justify-end gap-1' },
+                        extraActions
+                          .filter((a) => !a.hidden || !a.hidden(contact))
+                          .map((action, i) =>
+                            React.createElement(
+                              UI.Button,
+                              {
+                                key: i,
+                                variant: action.variant === 'destructive' ? 'destructive' : 'ghost',
+                                size: 'xs',
+                                onClick: () => action.onClick(contact),
+                                title: action.label,
+                              },
+                              action.label
+                            )
+                          )
+                      )
+                    )
+                )
+              )
       )
     ),
 
@@ -378,34 +325,53 @@ export function ContactsTable(props: ContactsTableProps) {
       data.length > 0 &&
       React.createElement(
         'div',
-        { className: 'flex items-center justify-between text-sm text-[var(--cg-text-muted)]' },
+        { className: 'flex items-center justify-between' },
         React.createElement(
           'span',
-          null,
+          { className: 'text-xs text-cg-text-muted' },
           `${(pagination.page - 1) * pagination.pageSize + 1}–${Math.min(pagination.page * pagination.pageSize, pagination.total)} de ${pagination.total}`
         ),
         React.createElement(
-          'div',
-          { className: 'flex gap-2' },
+          UI.Pagination,
+          null,
           React.createElement(
-            'button',
-            {
+            UI.PaginationContent,
+            null,
+            React.createElement(UI.PaginationPrevious, {
               onClick: prevPage,
               disabled: pagination.page <= 1,
-              className:
-                'px-3 py-1.5 text-xs rounded-lg border border-[var(--cg-border)] hover:bg-[var(--cg-bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
-            },
-            'Anterior'
-          ),
-          React.createElement(
-            'button',
-            {
+            }),
+            ...Array.from({ length: pagination.totalPages }, (_, i) => {
+              const page = i + 1;
+              // Mostrar primera, última, y ±1 de la actual; el resto ellipsis
+              const isCurrent = page === pagination.page;
+              const isNearCurrent = Math.abs(page - pagination.page) <= 1;
+              const isEdge = page === 1 || page === pagination.totalPages;
+
+              if (isCurrent || isNearCurrent || isEdge) {
+                return React.createElement(
+                  UI.PaginationItem,
+                  { key: page },
+                  React.createElement(UI.PaginationLink, {
+                    isActive: isCurrent,
+                    onClick: () => goToPage(page),
+                  }, String(page))
+                );
+              }
+              // Ellipsis solo en el primer gap
+              if (page === 2 || page === pagination.totalPages - 1) {
+                return React.createElement(
+                  UI.PaginationItem,
+                  { key: `ellipsis-${page}` },
+                  React.createElement(UI.PaginationEllipsis)
+                );
+              }
+              return null;
+            }).filter(Boolean),
+            React.createElement(UI.PaginationNext, {
               onClick: nextPage,
               disabled: pagination.page >= pagination.totalPages,
-              className:
-                'px-3 py-1.5 text-xs rounded-lg border border-[var(--cg-border)] hover:bg-[var(--cg-bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
-            },
-            'Siguiente'
+            })
           )
         )
       )
