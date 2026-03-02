@@ -144,8 +144,7 @@ export function ContactForm(props: ContactFormProps) {
           UI.Label,
           null,
           field.label,
-          field.required &&
-            React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
+          field.required && React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
         ),
         renderField(field, formData[field.key], (v) => handleChange(field.key, v))
       )

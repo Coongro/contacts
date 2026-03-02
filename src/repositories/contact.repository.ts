@@ -97,7 +97,12 @@ export class ContactRepository {
     orderDir = 'asc',
   }: SearchParams): Promise<ContactRow[]> {
     // eslint-disable-next-line no-console
-    console.log('[CONTACTS-DEBUG] search called with orderBy:', orderByField, 'orderDir:', orderDir);
+    console.log(
+      '[CONTACTS-DEBUG] search called with orderBy:',
+      orderByField,
+      'orderDir:',
+      orderDir
+    );
     return this.db.ormQuery((tx) => {
       const conditions = [];
 
@@ -147,8 +152,10 @@ export class ContactRepository {
         type: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.type)) as typeof q,
         phone: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.phone)) as typeof q,
         email: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.email)) as typeof q,
-        is_active: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.is_active)) as typeof q,
-        created_at: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.created_at)) as typeof q,
+        is_active: () =>
+          q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.is_active)) as typeof q,
+        created_at: () =>
+          q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.created_at)) as typeof q,
       };
 
       const applySorting = orderByField ? sortableColumns[orderByField] : undefined;

@@ -3,8 +3,8 @@
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
-import { formatType } from '../lib/formatType.js';
 import { useContact } from '../hooks/useContact.js';
+import { formatType } from '../lib/formatType.js';
 import type { ContactDetailProps } from '../types/components.js';
 
 const React = getHostReact();
@@ -91,11 +91,7 @@ export function ContactDetail(props: ContactDetailProps) {
         React.createElement(
           'div',
           { className: 'flex items-center gap-2 mt-1' },
-          React.createElement(
-            'span',
-            { className: 'text-sm text-cg-text-muted' },
-            typeLabel
-          ),
+          React.createElement('span', { className: 'text-sm text-cg-text-muted' }, typeLabel),
           React.createElement(
             UI.Badge,
             {
@@ -172,11 +168,7 @@ export function ContactDetail(props: ContactDetailProps) {
                   { className: 'text-xs text-cg-text-muted' },
                   field.label
                 ),
-                React.createElement(
-                  'span',
-                  { className: 'text-sm text-cg-text' },
-                  field.value
-                )
+                React.createElement('span', { className: 'text-sm text-cg-text' }, field.value)
               )
             )
           )
@@ -190,9 +182,7 @@ export function ContactDetail(props: ContactDetailProps) {
       React.createElement(
         'div',
         { className: 'flex flex-wrap gap-1.5' },
-        contact.tags.map((tag: string) =>
-          React.createElement(UI.Chip, { key: tag }, tag)
-        )
+        contact.tags.map((tag: string) => React.createElement(UI.Chip, { key: tag }, tag))
       ),
 
     // Secciones extra del bloque
@@ -205,11 +195,7 @@ export function ContactDetail(props: ContactDetailProps) {
           null,
           React.createElement(UI.CardTitle, null, section.title)
         ),
-        React.createElement(
-          UI.CardBody,
-          null,
-          section.render() as React.ReactNode
-        )
+        React.createElement(UI.CardBody, null, section.render() as React.ReactNode)
       )
     ),
 

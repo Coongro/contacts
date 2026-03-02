@@ -3,8 +3,8 @@
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
-import { formatType } from '../lib/formatType.js';
 import { useContact } from '../hooks/useContact.js';
+import { formatType } from '../lib/formatType.js';
 import type { ContactCardProps } from '../types/components.js';
 import type { Contact } from '../types/contact.js';
 
@@ -116,11 +116,7 @@ export function ContactCard(props: ContactCardProps) {
               { className: 'text-cg-text-muted w-20 flex-shrink-0' },
               fieldLabels[field] ?? field
             ),
-            React.createElement(
-              'span',
-              { className: 'text-cg-text truncate' },
-              String(value)
-            )
+            React.createElement('span', { className: 'text-cg-text truncate' }, String(value))
           );
         })
       ),
