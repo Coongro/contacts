@@ -5,14 +5,14 @@
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
-import { formatType } from '../lib/formatType.js';
 import { useContact } from '../hooks/useContact.js';
 import { useContacts } from '../hooks/useContacts.js';
+import { formatType } from '../lib/formatType.js';
 import type { ContactPickerProps } from '../types/components.js';
 
 const React = getHostReact();
 const UI = getHostUI();
-const { useState, useCallback, useEffect } = React;
+const { useCallback, useEffect } = React;
 
 export function ContactPicker(props: ContactPickerProps) {
   const {
@@ -146,7 +146,8 @@ function ContactDropdown(props: ContactDropdownProps) {
                       size: 'sm',
                     }),
                     subtitle:
-                      [contact.phone, contact.email].filter(Boolean).join(' · ') || formatType(contact.type),
+                      [contact.phone, contact.email].filter(Boolean).join(' · ') ||
+                      formatType(contact.type),
                   },
                   contact.name
                 )

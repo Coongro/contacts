@@ -4,8 +4,8 @@
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
-import { formatType } from '../lib/formatType.js';
 import { useContacts } from '../hooks/useContacts.js';
+import { formatType } from '../lib/formatType.js';
 import type { ContactsTableProps, ColumnDef } from '../types/components.js';
 import type { SortDirection } from '../types/filters.js';
 
@@ -51,11 +51,21 @@ export function ContactsTable(props: ContactsTableProps) {
     emptyMessage = 'No se encontraron contactos',
   } = props;
 
-  const { data, loading, error, setFilters, setSort, pagination, nextPage, prevPage, goToPage, refetch } =
-    useContacts({
-      ...initialFilters,
-      pageSize,
-    });
+  const {
+    data,
+    loading,
+    error,
+    setFilters,
+    setSort,
+    pagination,
+    nextPage,
+    prevPage,
+    goToPage,
+    refetch,
+  } = useContacts({
+    ...initialFilters,
+    pageSize,
+  });
 
   const [searchValue, setSearchValue] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -131,8 +141,7 @@ export function ContactsTable(props: ContactsTableProps) {
     return false;
   };
 
-  const totalColSpan =
-    (selectable ? 1 : 0) + allColumns.length + (extraActions.length > 0 ? 1 : 0);
+  const totalColSpan = (selectable ? 1 : 0) + allColumns.length + (extraActions.length > 0 ? 1 : 0);
 
   // --- Render ---
 
@@ -220,11 +229,7 @@ export function ContactsTable(props: ContactsTableProps) {
             )
           ),
           extraActions.length > 0 &&
-            React.createElement(
-              UI.TableHead,
-              { className: 'w-24 text-right' },
-              'Acciones'
-            )
+            React.createElement(UI.TableHead, { className: 'w-24 text-right' }, 'Acciones')
         )
       ),
       // Body
@@ -352,10 +357,14 @@ export function ContactsTable(props: ContactsTableProps) {
                 return React.createElement(
                   UI.PaginationItem,
                   { key: page },
-                  React.createElement(UI.PaginationLink, {
-                    isActive: isCurrent,
-                    onClick: () => goToPage(page),
-                  }, String(page))
+                  React.createElement(
+                    UI.PaginationLink,
+                    {
+                      isActive: isCurrent,
+                      onClick: () => goToPage(page),
+                    },
+                    String(page)
+                  )
                 );
               }
               // Ellipsis solo en el primer gap
