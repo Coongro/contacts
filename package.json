@@ -1,6 +1,6 @@
 {
   "name": "@coongro/contacts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Módulo genérico y reutilizable de gestión de contactos para Coongro",
   "main": "dist/index.js",
