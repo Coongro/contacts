@@ -26,8 +26,9 @@ jobs:
 
       - name: Publish to production Verdaccio
         run: |
+          echo "@coongro:registry=${{ secrets.PROD_VERDACCIO_URL }}" > .npmrc
           echo "//${{ secrets.PROD_VERDACCIO_URL_HOST }}/:_authToken=${{ secrets.PROD_VERDACCIO_TOKEN }}" >> .npmrc
-          npm publish --ignore-scripts --registry ${{ secrets.PROD_VERDACCIO_URL }}
+          npm publish --ignore-scripts
 
       - name: Summary
         run: |
