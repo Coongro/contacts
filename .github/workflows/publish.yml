@@ -30,6 +30,12 @@ jobs:
           echo "//${{ secrets.PROD_VERDACCIO_URL_HOST }}/:_authToken=${{ secrets.PROD_VERDACCIO_TOKEN }}" >> .npmrc
           npm publish --ignore-scripts
 
+      - name: Create tag
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
       - name: Summary
         run: |
           VERSION=$(node -p "require('./package.json').version")
