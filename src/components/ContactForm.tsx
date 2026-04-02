@@ -53,6 +53,30 @@ const FIELD_SECTIONS: Array<{ title: string; icon: string; keys: string[] }> = [
   { title: 'Notas', icon: 'FileText', keys: ['notes'] },
 ];
 
+/** Keys de campos base que pertenecen a alguna sección */
+const BASE_SECTIONED_KEYS = new Set(
+  FIELD_SECTIONS.flatMap((s) => s.keys).filter((k) => BASE_FIELDS.some((f) => f.key === k))
+);
+
+/** Header de sección con icono (sin dependencias de closure) */
+function renderSectionHeader(title: string, icon: string) {
+  return React.createElement(
+    'h3',
+    {
+      key: `header-${title}`,
+      className: 'flex items-center gap-2 text-sm font-medium text-cg-text-muted',
+    },
+    React.createElement(UI.DynamicIcon, { icon, size: 14, className: 'text-cg-text-muted' }),
+    title
+  );
+}
+
+function getSubmitLabel(isSaving: boolean, isEdit: boolean): string {
+  if (isSaving) return 'Guardando...';
+  if (isEdit) return 'Actualizar';
+  return 'Crear contacto';
+}
+
 export function ContactForm(props: ContactFormProps) {
   const {
     contactId,
@@ -140,9 +164,8 @@ export function ContactForm(props: ContactFormProps) {
     });
   }
 
-  // Agrupar campos por sección; los extra van al final sin sección
-  const sectionedKeys = new Set(FIELD_SECTIONS.flatMap((s) => s.keys));
-  const extraVisible = allFields.filter((f) => !sectionedKeys.has(f.key));
+  // Campos extra de bloques que no pertenecen a ninguna sección base
+  const unsectionedFields = allFields.filter((f) => !BASE_SECTIONED_KEYS.has(f.key));
 
   function renderFieldEl(field: FieldDef) {
     return React.createElement(
@@ -155,18 +178,6 @@ export function ContactForm(props: ContactFormProps) {
         field.required && React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
       ),
       renderField(field, formData[field.key], (v) => handleChange(field.key, v))
-    );
-  }
-
-  function renderSectionHeader(title: string, icon: string) {
-    return React.createElement(
-      'h3',
-      {
-        key: `header-${icon}`,
-        className: 'flex items-center gap-2 text-sm font-medium text-cg-text-muted',
-      },
-      React.createElement(UI.DynamicIcon, { icon, size: 14, className: 'text-cg-text-muted' }),
-      title
     );
   }
 
@@ -186,10 +197,10 @@ export function ContactForm(props: ContactFormProps) {
         renderSectionHeader(section.title, section.icon),
         ...sectionFields.map(renderFieldEl)
       );
-    }),
+    }).filter(Boolean),
 
     // Campos extra de bloques (sin sección)
-    ...extraVisible.map(renderFieldEl),
+    ...unsectionedFields.map(renderFieldEl),
 
     // Toggle activo
     React.createElement(
@@ -213,7 +224,7 @@ export function ContactForm(props: ContactFormProps) {
           disabled: isSaving || !formData.name,
           className: 'flex-1',
         },
-        isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear contacto'
+        getSubmitLabel(isSaving, isEdit)
       ),
       onCancel &&
         React.createElement(
