@@ -44,6 +44,15 @@ const BASE_FIELDS: FieldDef[] = [
   { key: 'notes', label: 'Notas', type: 'textarea', placeholder: 'Notas adicionales...' },
 ];
 
+/** Secciones con iconos para agrupar los campos visualmente */
+const FIELD_SECTIONS: Array<{ title: string; icon: string; keys: string[] }> = [
+  { title: 'Información personal', icon: 'User', keys: ['type', 'name'] },
+  { title: 'Contacto', icon: 'Phone', keys: ['phone', 'email'] },
+  { title: 'Documento', icon: 'FileCheck', keys: ['document_type', 'document_number'] },
+  { title: 'Dirección', icon: 'MapPin', keys: ['address'] },
+  { title: 'Notas', icon: 'FileText', keys: ['notes'] },
+];
+
 export function ContactForm(props: ContactFormProps) {
   const {
     contactId,
@@ -131,24 +140,56 @@ export function ContactForm(props: ContactFormProps) {
     });
   }
 
+  // Agrupar campos por sección; los extra van al final sin sección
+  const sectionedKeys = new Set(FIELD_SECTIONS.flatMap((s) => s.keys));
+  const extraVisible = allFields.filter((f) => !sectionedKeys.has(f.key));
+
+  function renderFieldEl(field: FieldDef) {
+    return React.createElement(
+      'div',
+      { key: field.key, className: 'flex flex-col gap-1.5' },
+      React.createElement(
+        UI.Label,
+        null,
+        field.label,
+        field.required && React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
+      ),
+      renderField(field, formData[field.key], (v) => handleChange(field.key, v))
+    );
+  }
+
+  function renderSectionHeader(title: string, icon: string) {
+    return React.createElement(
+      'h3',
+      {
+        key: `header-${icon}`,
+        className: 'flex items-center gap-2 text-sm font-medium text-cg-text-muted',
+      },
+      React.createElement(UI.DynamicIcon, { icon, size: 14, className: 'text-cg-text-muted' }),
+      title
+    );
+  }
+
   return React.createElement(
     'form',
-    { onSubmit: handleSubmit, className: `flex flex-col gap-4 ${className}` },
+    { onSubmit: handleSubmit, className: `flex flex-col gap-6 ${className}` },
 
-    // Campos
-    allFields.map((field) =>
-      React.createElement(
+    // Campos agrupados por sección
+    ...FIELD_SECTIONS.map((section) => {
+      const sectionFields = section.keys
+        .map((k) => allFields.find((f) => f.key === k))
+        .filter((f): f is FieldDef => Boolean(f));
+      if (sectionFields.length === 0) return null;
+      return React.createElement(
         'div',
-        { key: field.key, className: 'flex flex-col gap-1.5' },
-        React.createElement(
-          UI.Label,
-          null,
-          field.label,
-          field.required && React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
-        ),
-        renderField(field, formData[field.key], (v) => handleChange(field.key, v))
-      )
-    ),
+        { key: section.title, className: 'flex flex-col gap-3' },
+        renderSectionHeader(section.title, section.icon),
+        ...sectionFields.map(renderFieldEl)
+      );
+    }),
+
+    // Campos extra de bloques (sin sección)
+    ...extraVisible.map(renderFieldEl),
 
     // Toggle activo
     React.createElement(
