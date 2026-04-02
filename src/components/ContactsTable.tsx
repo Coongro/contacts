@@ -43,7 +43,6 @@ export function ContactsTable(props: ContactsTableProps) {
     columns,
     extraColumns = [],
     extraActions = [],
-    extraFilters: _extraFilters = [],
     onRowClick,
     selectable = false,
     onSelectionChange,
@@ -67,25 +66,21 @@ export function ContactsTable(props: ContactsTableProps) {
   const dtColumns = useMemo(() => {
     const base = columns ?? DEFAULT_COLUMNS;
     return [...base, ...extraColumns].map((col) => ({
-      key: col.key,
-      header: col.header,
+      ...col,
       sortable: SORTABLE_KEYS.has(col.key),
-      render: col.render as ((item: Contact) => React.ReactNode) | undefined,
-      className: col.className,
     }));
   }, [columns, extraColumns]);
 
   // Acciones en formato DataTable
-  const dtActions = useMemo(
-    () =>
-      extraActions.map((a) => ({
-        label: a.label,
-        onClick: a.onClick,
-        variant: a.variant === 'destructive' ? ('destructive' as const) : ('ghost' as const),
-        hidden: a.hidden,
-      })),
-    [extraActions]
-  );
+  const dtActions = useMemo(() => {
+    if (extraActions.length === 0) return undefined;
+    return extraActions.map((a) => ({
+      label: a.label,
+      onClick: a.onClick,
+      variant: a.variant as 'ghost' | 'destructive' | undefined,
+      hidden: a.hidden,
+    }));
+  }, [extraActions]);
 
   const handleSearch = useCallback(
     (value: string) => {
@@ -114,9 +109,7 @@ export function ContactsTable(props: ContactsTableProps) {
       if (!SORTABLE_KEYS.has(key)) return;
       setSortKey(direction ? key : null);
       setSortDir(direction);
-      if (direction) {
-        setSort(key, direction);
-      }
+      setSort(key, direction ?? 'asc');
     },
     [setSort]
   );
@@ -172,7 +165,7 @@ export function ContactsTable(props: ContactsTableProps) {
     rowKey: (contact: Contact) => contact.id,
     loading,
     error: error ?? undefined,
-    onRetry: () => refetch(),
+    onRetry: refetch,
     columns: dtColumns,
     searchPlaceholder: 'Buscar contactos...',
     searchValue,
@@ -200,9 +193,13 @@ export function ContactsTable(props: ContactsTableProps) {
     selectable,
     selectedIds,
     onSelectionChange: handleSelectionChange,
-    actions: dtActions.length > 0 ? dtActions : undefined,
+    actions: dtActions,
     onRowClick,
-    emptyState: { title: emptyMessage },
+    emptyState: {
+      title: emptyMessage,
+      filteredTitle: 'Sin resultados',
+      filteredDescription: 'No se encontraron contactos con los filtros actuales.',
+    },
     mobileRender,
     className,
   });
