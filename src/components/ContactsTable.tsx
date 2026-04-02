@@ -1,13 +1,14 @@
 /**
  * Tabla de contactos con búsqueda, filtros y paginación.
  * Extensible via extraColumns, extraActions, extraFilters.
+ * Usa DataTable de ui-components con mobileRender para cards en móvil.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { useContacts } from '../hooks/useContacts.js';
 import { formatType } from '../lib/formatType.js';
 import type { ContactsTableProps, ColumnDef } from '../types/components.js';
-import type { SortDirection } from '../types/filters.js';
+import type { Contact } from '../types/contact.js';
 
 const React = getHostReact();
 const UI = getHostUI();
@@ -51,18 +52,7 @@ export function ContactsTable(props: ContactsTableProps) {
     emptyMessage = 'No se encontraron contactos',
   } = props;
 
-  const {
-    data,
-    loading,
-    error,
-    setFilters,
-    setSort,
-    pagination,
-    nextPage,
-    prevPage,
-    goToPage,
-    refetch,
-  } = useContacts({
+  const { data, loading, error, setFilters, setSort, pagination, goToPage, refetch } = useContacts({
     ...initialFilters,
     pageSize,
   });
@@ -70,17 +60,35 @@ export function ContactsTable(props: ContactsTableProps) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTypeFilter, setActiveTypeFilter] = useState<string>(initialFilters?.type ?? '');
-  const [sortKey, setSortKey] = useState<string>('');
-  const [sortDir, setSortDir] = useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
 
-  const allColumns = useMemo(
-    () => [...(columns ?? DEFAULT_COLUMNS), ...extraColumns],
-    [columns, extraColumns]
+  // Columnas en formato DataTable
+  const dtColumns = useMemo(() => {
+    const base = columns ?? DEFAULT_COLUMNS;
+    return [...base, ...extraColumns].map((col) => ({
+      key: col.key,
+      header: col.header,
+      sortable: SORTABLE_KEYS.has(col.key),
+      render: col.render as ((item: Contact) => React.ReactNode) | undefined,
+      className: col.className,
+    }));
+  }, [columns, extraColumns]);
+
+  // Acciones en formato DataTable
+  const dtActions = useMemo(
+    () =>
+      extraActions.map((a) => ({
+        label: a.label,
+        onClick: a.onClick,
+        variant: a.variant === 'destructive' ? ('destructive' as const) : ('ghost' as const),
+        hidden: a.hidden,
+      })),
+    [extraActions]
   );
 
   const handleSearch = useCallback(
-    (e: { target: { value: string } }) => {
-      const value = e.target.value;
+    (value: string) => {
       setSearchValue(value);
       setFilters({
         query: value || undefined,
@@ -102,287 +110,100 @@ export function ContactsTable(props: ContactsTableProps) {
   );
 
   const handleSort = useCallback(
-    (key: string) => {
+    (key: string, direction: 'asc' | 'desc' | null) => {
       if (!SORTABLE_KEYS.has(key)) return;
-      const newDir: SortDirection = sortKey === key && sortDir === 'asc' ? 'desc' : 'asc';
-      setSortKey(key);
-      setSortDir(newDir);
-      setSort(key, newDir);
+      setSortKey(direction ? key : null);
+      setSortDir(direction);
+      if (direction) {
+        setSort(key, direction);
+      }
     },
-    [sortKey, sortDir, setSort]
+    [setSort]
   );
 
-  const toggleSelection = useCallback(
-    (id: string) => {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        onSelectionChange?.(Array.from(next));
-        return next;
-      });
+  const handleSelectionChange = useCallback(
+    (ids: Set<string>) => {
+      setSelectedIds(ids);
+      onSelectionChange?.(Array.from(ids));
     },
     [onSelectionChange]
   );
 
-  const toggleAllSelection = useCallback(() => {
-    setSelectedIds((prev) => {
-      const allSelected = data.every((c) => prev.has(c.id));
-      const next = allSelected ? new Set<string>() : new Set(data.map((c) => c.id));
-      onSelectionChange?.(Array.from(next));
-      return next;
-    });
-  }, [data, onSelectionChange]);
-
-  /** Mapeo de sort direction para TableHead */
-  const getSortDirection = (colKey: string): false | 'asc' | 'desc' | undefined => {
-    if (!SORTABLE_KEYS.has(colKey)) return undefined;
-    if (sortKey === colKey) return sortDir as 'asc' | 'desc';
-    return false;
-  };
-
-  const totalColSpan = (selectable ? 1 : 0) + allColumns.length + (extraActions.length > 0 ? 1 : 0);
-
-  // --- Render ---
-
-  if (error) {
-    return React.createElement(UI.ErrorDisplay, {
-      title: 'Error',
-      message: error,
-      onRetry: () => refetch(),
-    });
-  }
-
-  return React.createElement(
-    'div',
-    { className: `flex flex-col gap-4 ${className}` },
-
-    // Barra de búsqueda y filtros
-    React.createElement(
-      'div',
-      { className: 'flex items-center gap-3' },
-      // Busqueda con icono
+  // Card para vista móvil
+  const mobileRender = useCallback(
+    (contact: Contact) =>
       React.createElement(
         'div',
-        { className: 'relative flex-1' },
-        React.createElement(UI.DynamicIcon, {
-          icon: 'Search',
-          size: 16,
-          className: 'absolute left-3 top-1/2 -translate-y-1/2 text-cg-text-muted',
-        }),
-        React.createElement(UI.Input, {
-          type: 'text',
-          placeholder: 'Buscar contactos...',
-          value: searchValue,
-          onChange: handleSearch,
-          className: 'pl-10',
-        })
-      ),
-      // Filtro de tipo
-      React.createElement(
-        UI.ButtonGroup,
-        null,
-        ['', 'person', 'company', 'other'].map((type) =>
-          React.createElement(
-            UI.ButtonGroupItem,
-            {
-              key: type,
-              active: activeTypeFilter === type,
-              onClick: () => handleTypeFilter(type),
-            },
-            type === '' ? 'Todos' : formatType(type)
-          )
-        )
-      )
-    ),
-
-    // Tabla
-    React.createElement(
-      UI.Table,
-      null,
-      // Header
-      React.createElement(
-        UI.TableHeader,
-        null,
+        { className: 'flex flex-col gap-1' },
+        // Nombre
+        React.createElement('span', { className: 'font-medium text-sm' }, contact.name),
+        // Tipo · Teléfono
         React.createElement(
-          UI.TableRow,
-          null,
-          selectable &&
-            React.createElement(
-              UI.TableHead,
-              { className: 'w-10' },
-              React.createElement(UI.Checkbox, {
-                checked: data.length > 0 && data.every((c) => selectedIds.has(c.id)),
-                onCheckedChange: () => toggleAllSelection(),
-              })
-            ),
-          allColumns.map((col) =>
-            React.createElement(
-              UI.TableHead,
-              {
-                key: col.key,
-                sortDirection: getSortDirection(col.key),
-                onSort: () => handleSort(col.key),
-                className: col.className,
-              },
-              col.header
-            )
-          ),
-          extraActions.length > 0 &&
-            React.createElement(UI.TableHead, { className: 'w-24 text-right' }, 'Acciones')
-        )
-      ),
-      // Body
-      React.createElement(
-        UI.TableBody,
-        null,
-        loading
-          ? Array.from({ length: 5 }).map((_, i) =>
-              React.createElement(
-                UI.TableRow,
-                { key: `skeleton-${i}` },
-                Array.from({ length: totalColSpan }).map((_, j) =>
-                  React.createElement(
-                    UI.TableCell,
-                    { key: j },
-                    React.createElement(UI.Skeleton, { className: 'h-4' })
-                  )
-                )
-              )
-            )
-          : data.length === 0
-            ? React.createElement(
-                UI.TableRow,
-                null,
-                React.createElement(
-                  UI.TableCell,
-                  { colSpan: totalColSpan, className: 'p-0' },
-                  React.createElement(UI.EmptyState, { title: emptyMessage })
-                )
-              )
-            : data.map((contact) =>
-                React.createElement(
-                  UI.TableRow,
-                  {
-                    key: contact.id,
-                    onClick: onRowClick ? () => onRowClick(contact) : undefined,
-                    className: `${
-                      onRowClick ? 'cursor-pointer' : ''
-                    } ${selectedIds.has(contact.id) ? 'bg-cg-accent-bg' : ''}`,
-                  },
-                  selectable &&
-                    React.createElement(
-                      UI.TableCell,
-                      {
-                        className: 'w-10',
-                        onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
-                      },
-                      React.createElement(UI.Checkbox, {
-                        checked: selectedIds.has(contact.id),
-                        onCheckedChange: () => toggleSelection(contact.id),
-                      })
-                    ),
-                  allColumns.map((col) =>
-                    React.createElement(
-                      UI.TableCell,
-                      { key: col.key, className: col.className },
-                      col.render
-                        ? (col.render(contact) as React.ReactNode)
-                        : (((contact as unknown as Record<string, unknown>)[
-                            col.key
-                          ] as React.ReactNode) ?? '—')
-                    )
-                  ),
-                  extraActions.length > 0 &&
-                    React.createElement(
-                      UI.TableCell,
-                      {
-                        className: 'text-right',
-                        onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
-                      },
-                      React.createElement(
-                        'div',
-                        { className: 'flex items-center justify-end gap-1' },
-                        extraActions
-                          .filter((a) => !a.hidden || !a.hidden(contact))
-                          .map((action, i) =>
-                            React.createElement(
-                              UI.Button,
-                              {
-                                key: i,
-                                variant: action.variant === 'destructive' ? 'destructive' : 'ghost',
-                                size: 'xs',
-                                onClick: () => action.onClick(contact),
-                                title: action.label,
-                              },
-                              action.label
-                            )
-                          )
-                      )
-                    )
-                )
-              )
-      )
-    ),
-
-    // Paginación
-    !loading &&
-      data.length > 0 &&
-      React.createElement(
-        'div',
-        { className: 'flex items-center justify-between' },
-        React.createElement(
-          'span',
-          { className: 'text-xs text-cg-text-muted' },
-          `${(pagination.page - 1) * pagination.pageSize + 1}–${Math.min(pagination.page * pagination.pageSize, pagination.total)} de ${pagination.total}`
+          'div',
+          { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
+          [formatType(contact.type), contact.phone].filter(Boolean).join(' · ')
         ),
-        React.createElement(
-          UI.Pagination,
-          null,
+        // Email
+        contact.email &&
           React.createElement(
-            UI.PaginationContent,
-            null,
-            React.createElement(UI.PaginationPrevious, {
-              onClick: prevPage,
-              disabled: pagination.page <= 1,
-            }),
-            ...Array.from({ length: pagination.totalPages }, (_, i) => {
-              const page = i + 1;
-              // Mostrar primera, última, y ±1 de la actual; el resto ellipsis
-              const isCurrent = page === pagination.page;
-              const isNearCurrent = Math.abs(page - pagination.page) <= 1;
-              const isEdge = page === 1 || page === pagination.totalPages;
-
-              if (isCurrent || isNearCurrent || isEdge) {
-                return React.createElement(
-                  UI.PaginationItem,
-                  { key: page },
-                  React.createElement(
-                    UI.PaginationLink,
-                    {
-                      isActive: isCurrent,
-                      onClick: () => goToPage(page),
-                    },
-                    String(page)
-                  )
-                );
-              }
-              // Ellipsis solo en el primer gap
-              if (page === 2 || page === pagination.totalPages - 1) {
-                return React.createElement(
-                  UI.PaginationItem,
-                  { key: `ellipsis-${page}` },
-                  React.createElement(UI.PaginationEllipsis)
-                );
-              }
-              return null;
-            }).filter(Boolean),
-            React.createElement(UI.PaginationNext, {
-              onClick: nextPage,
-              disabled: pagination.page >= pagination.totalPages,
-            })
+            'div',
+            { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
+            contact.email
+          ),
+        // Badge de estado
+        React.createElement(
+          'div',
+          { className: 'mt-1' },
+          React.createElement(
+            UI.Badge,
+            {
+              variant: contact.is_active ? 'success-soft' : 'secondary',
+              size: 'sm',
+            },
+            contact.is_active ? 'Activo' : 'Inactivo'
           )
         )
-      )
+      ),
+    []
   );
+
+  return React.createElement(UI.DataTable, {
+    data,
+    rowKey: (contact: Contact) => contact.id,
+    loading,
+    error: error ?? undefined,
+    onRetry: () => refetch(),
+    columns: dtColumns,
+    searchPlaceholder: 'Buscar contactos...',
+    searchValue,
+    onSearchChange: handleSearch,
+    filterSections: [
+      {
+        label: 'Tipo',
+        options: ['', 'person', 'company', 'other'].map((type) => ({
+          value: type,
+          label: type === '' ? 'Todos' : formatType(type),
+        })),
+        value: activeTypeFilter,
+        onChange: handleTypeFilter,
+      },
+    ],
+    sortKey,
+    sortDirection: sortDir,
+    onSortChange: handleSort,
+    pagination: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      total: pagination.total,
+    },
+    onPageChange: goToPage,
+    selectable,
+    selectedIds,
+    onSelectionChange: handleSelectionChange,
+    actions: dtActions.length > 0 ? dtActions : undefined,
+    onRowClick,
+    emptyState: { title: emptyMessage },
+    mobileRender,
+    className,
+  });
 }
