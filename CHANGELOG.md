@@ -1,5 +1,11 @@
 # @coongro/contacts
 
+## 1.1.0
+
+### Minor Changes
+
+- b2fd5b7: Migrate ContactsTable to DataTable with mobile card view (mobileRender)
+
 ## 1.0.5
 
 ### Patch Changes
