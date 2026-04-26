@@ -1,5 +1,15 @@
 # @coongro/contacts
 
+## 1.2.0
+
+### Minor Changes
+
+- 33ead4b: fix(detail): contact schema updated_at now uses .$onUpdate() for proper timestamp refresh; ContactDetail timestamps wrapped in compact Card with es-AR locale (COONG-112)
+- 33ead4b: refactor(ui): adopt FormSection + FormDialogSubmit from `@coongro/ui-components` 0.28.0 (COONG-112)
+  - `ContactForm` ahora envuelve cada sección (Información personal, Contacto, Documento, Dirección, Notas, Estado) en `UI.FormSection` (Card + ícono + título), reemplazando el helper local `renderSectionHeader`.
+  - `CreateContactButton` migra a `UI.FormDialogSubmit`: footer sticky con botones Cancelar/Crear contacto siempre visibles.
+  - `ContactFormProps` extendida con `formRef`, `hideActions`, `onSavingChange` para integrarse en footers externos. Compatible hacia atrás (todas opcionales).
+
 ## 1.1.0
 
 ### Minor Changes
