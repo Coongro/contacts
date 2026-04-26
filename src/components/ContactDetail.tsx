@@ -114,6 +114,7 @@ export function ContactDetail(props: ContactDetailProps) {
               size: 'sm',
               onClick: () => onEdit(contact),
             },
+            React.createElement(UI.DynamicIcon, { icon: 'Pencil', size: 14 }),
             'Editar'
           ),
         onDelete &&
@@ -124,6 +125,7 @@ export function ContactDetail(props: ContactDetailProps) {
               size: 'sm',
               onClick: () => onDelete(contact),
             },
+            React.createElement(UI.DynamicIcon, { icon: 'Trash2', size: 14 }),
             'Eliminar'
           ),
         ...extraActions
@@ -201,17 +203,21 @@ export function ContactDetail(props: ContactDetailProps) {
 
     // Metadata
     React.createElement(
-      'div',
-      { className: 'text-xs text-cg-text-subtle flex gap-4' },
+      UI.Card,
+      { className: 'p-4 w-fit' },
       React.createElement(
-        'span',
-        null,
-        `Creado: ${new Date(contact.created_at).toLocaleDateString()}`
-      ),
-      React.createElement(
-        'span',
-        null,
-        `Actualizado: ${new Date(contact.updated_at).toLocaleDateString()}`
+        'div',
+        { className: 'flex flex-col gap-1 text-xs text-cg-text-muted' },
+        React.createElement(
+          'span',
+          null,
+          `Creado: ${new Date(contact.created_at).toLocaleDateString('es-AR')}`
+        ),
+        React.createElement(
+          'span',
+          null,
+          `Actualizado: ${new Date(contact.updated_at).toLocaleDateString('es-AR')}`
+        )
       )
     )
   );

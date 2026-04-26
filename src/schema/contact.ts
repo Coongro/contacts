@@ -21,7 +21,8 @@ export const contactTable = pgTable('module_contacts_contacts', {
     .default(sql`now()`),
   updated_at: timestamp('updated_at', { mode: 'string' })
     .notNull()
-    .default(sql`now()`),
+    .default(sql`now()`)
+    .$onUpdate(() => new Date().toISOString()),
 });
 
 export type ContactRow = typeof contactTable.$inferSelect;
