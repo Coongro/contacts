@@ -1,6 +1,8 @@
 /**
  * Props para todos los componentes reutilizables de contacts.
  */
+import type * as React from 'react';
+
 import type { Contact, ContactCreateData } from './contact.js';
 import type { ContactFilters } from './filters.js';
 
@@ -86,6 +88,12 @@ export interface ContactFormProps {
   onCancel?: () => void;
   onExtraFieldsData?: (data: Record<string, unknown>) => void;
   className?: string;
+  /** Ref al elemento <form>. El caller puede disparar submit con `formRef.current?.requestSubmit()` */
+  formRef?: React.Ref<HTMLFormElement>;
+  /** Si es true, el form no renderiza sus propios botones (los pone el caller en el footer del dialog) */
+  hideActions?: boolean;
+  /** Notifica al caller cuando cambia el estado de guardado */
+  onSavingChange?: (saving: boolean) => void;
 }
 
 // ---------------------------------------------------------------------------
