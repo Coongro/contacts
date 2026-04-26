@@ -1,5 +1,5 @@
 /**
- * Botón para crear contacto. Abre un FormDialog con ContactForm.
+ * Botón para crear contacto. Abre un FormDialogSubmit con ContactForm.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
@@ -23,6 +23,7 @@ export function CreateContactButton(props: CreateContactButtonProps) {
   } = props;
 
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleSuccess = useCallback(
     (contact: Contact) => {
@@ -51,21 +52,24 @@ export function CreateContactButton(props: CreateContactButtonProps) {
       label
     ),
 
-    // Modal
-    React.createElement(
-      UI.FormDialog,
-      {
-        open,
-        onOpenChange: setOpen,
-        title: label,
-        size: 'md',
-      },
-      React.createElement(ContactForm, {
-        defaults,
-        extraFields,
-        onSuccess: handleSuccess,
-        onCancel: () => setOpen(false),
-      })
-    )
+    // Modal con footer sticky vía FormDialogSubmit
+    React.createElement(UI.FormDialogSubmit, {
+      open,
+      onOpenChange: setOpen,
+      title: label,
+      size: 'md',
+      submitLabel: 'Crear contacto',
+      onCancel: () => setOpen(false),
+      disabled: saving,
+      children: ({ formRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
+        React.createElement(ContactForm, {
+          defaults,
+          extraFields,
+          onSuccess: handleSuccess,
+          formRef,
+          hideActions: true,
+          onSavingChange: setSaving,
+        }),
+    })
   );
 }

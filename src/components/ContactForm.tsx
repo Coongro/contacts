@@ -58,19 +58,6 @@ const BASE_SECTIONED_KEYS = new Set(
   FIELD_SECTIONS.flatMap((s) => s.keys).filter((k) => BASE_FIELDS.some((f) => f.key === k))
 );
 
-/** Header de sección con icono (sin dependencias de closure) */
-function renderSectionHeader(title: string, icon: string) {
-  return React.createElement(
-    'h3',
-    {
-      key: `header-${title}`,
-      className: 'flex items-center gap-2 text-sm font-medium text-cg-text-muted',
-    },
-    React.createElement(UI.DynamicIcon, { icon, size: 14, className: 'text-cg-text-muted' }),
-    title
-  );
-}
-
 function getSubmitLabel(isSaving: boolean, isEdit: boolean): string {
   if (isSaving) return 'Guardando...';
   if (isEdit) return 'Actualizar';
@@ -87,11 +74,19 @@ export function ContactForm(props: ContactFormProps) {
     onCancel,
     onExtraFieldsData,
     className = '',
+    formRef,
+    hideActions,
+    onSavingChange,
   } = props;
 
   const isEdit = !!contactId;
   const { contact, loading: loadingContact } = useContact(contactId);
   const { create, update, creating, updating } = useContactMutations();
+  const isSaving = creating || updating;
+
+  useEffect(() => {
+    onSavingChange?.(isSaving);
+  }, [isSaving, onSavingChange]);
 
   const [formData, setFormData] = useState<Record<string, unknown>>({
     type: 'person',
@@ -153,7 +148,6 @@ export function ContactForm(props: ContactFormProps) {
     [formData, isEdit, contactId, create, update, onSuccess, onExtraFieldsData]
   );
 
-  const isSaving = creating || updating;
   const hiddenSet = new Set(hiddenFields);
   const allFields = [...BASE_FIELDS, ...extraFields].filter((f) => !hiddenSet.has(f.key));
 
@@ -183,7 +177,7 @@ export function ContactForm(props: ContactFormProps) {
 
   return React.createElement(
     'form',
-    { onSubmit: handleSubmit, className: `flex flex-col gap-6 ${className}` },
+    { ref: formRef, onSubmit: handleSubmit, className: `flex flex-col gap-4 ${className}` },
 
     // Campos agrupados por sección
     ...FIELD_SECTIONS.map((section) => {
@@ -192,51 +186,60 @@ export function ContactForm(props: ContactFormProps) {
         .filter((f): f is FieldDef => Boolean(f));
       if (sectionFields.length === 0) return null;
       return React.createElement(
-        'div',
-        { key: section.title, className: 'flex flex-col gap-3' },
-        renderSectionHeader(section.title, section.icon),
+        UI.FormSection,
+        { key: section.title, icon: section.icon, title: section.title },
         ...sectionFields.map(renderFieldEl)
       );
     }).filter(Boolean),
 
     // Campos extra de bloques (sin sección)
-    ...unsectionedFields.map(renderFieldEl),
+    unsectionedFields.length > 0 &&
+      React.createElement(
+        UI.FormSection,
+        { key: 'extra', icon: 'Settings', title: 'Datos adicionales' },
+        ...unsectionedFields.map(renderFieldEl)
+      ),
 
     // Toggle activo
     React.createElement(
-      'div',
-      { className: 'flex items-center justify-between py-2' },
-      React.createElement(UI.Label, null, 'Activo'),
-      React.createElement(UI.Switch, {
-        checked: !!formData.is_active,
-        onCheckedChange: (v: boolean) => handleChange('is_active', v),
-      })
+      UI.FormSection,
+      { key: 'status', icon: 'CircleCheck', title: 'Estado' },
+      React.createElement(
+        'div',
+        { className: 'flex items-center justify-between' },
+        React.createElement(UI.Label, null, 'Activo'),
+        React.createElement(UI.Switch, {
+          checked: !!formData.is_active,
+          onCheckedChange: (v: boolean) => handleChange('is_active', v),
+        })
+      )
     ),
 
-    // Acciones
-    React.createElement(
-      'div',
-      { className: 'flex gap-3 pt-2' },
+    // Acciones (solo si el caller no las pone en el footer del dialog)
+    !hideActions &&
       React.createElement(
-        UI.Button,
-        {
-          type: 'submit',
-          disabled: isSaving || !formData.name,
-          className: 'flex-1',
-        },
-        getSubmitLabel(isSaving, isEdit)
-      ),
-      onCancel &&
+        'div',
+        { className: 'flex gap-3 pt-2' },
         React.createElement(
           UI.Button,
           {
-            type: 'button',
-            variant: 'outline',
-            onClick: onCancel,
+            type: 'submit',
+            disabled: isSaving || !formData.name,
+            className: 'flex-1',
           },
-          'Cancelar'
-        )
-    )
+          getSubmitLabel(isSaving, isEdit)
+        ),
+        onCancel &&
+          React.createElement(
+            UI.Button,
+            {
+              type: 'button',
+              variant: 'outline',
+              onClick: onCancel,
+            },
+            'Cancelar'
+          )
+      )
   );
 }
 
