@@ -158,6 +158,8 @@ export interface ContactDetailProps {
 export interface CreateContactButtonProps {
   defaults?: Partial<ContactCreateData>;
   label?: string;
+  /** Texto del botón de submit del dialog (default "Crear contacto"; ej. "Crear dueño"). */
+  submitLabel?: string;
   extraFields?: FieldDef[];
   onSuccess?: (contact: Contact) => void;
   variant?: 'primary' | 'outline';

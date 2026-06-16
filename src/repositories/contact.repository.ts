@@ -96,13 +96,6 @@ export class ContactRepository {
     orderBy: orderByField,
     orderDir = 'asc',
   }: SearchParams): Promise<ContactRow[]> {
-    // eslint-disable-next-line no-console
-    console.log(
-      '[CONTACTS-DEBUG] search called with orderBy:',
-      orderByField,
-      'orderDir:',
-      orderDir
-    );
     return this.db.ormQuery((tx) => {
       const conditions = [];
 
