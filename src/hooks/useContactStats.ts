@@ -9,8 +9,6 @@ const { useState, useEffect, useCallback, useRef } = React;
 export interface ContactStatsData {
   total: number;
   byType: Array<{ type: string; count: number }>;
-  active: number;
-  inactive: number;
 }
 
 export function useContactStats(): {
@@ -45,8 +43,6 @@ export function useContactStats(): {
       setStats({
         total,
         byType,
-        active: total,
-        inactive: 0,
       });
     } catch (err) {
       if (!mountedRef.current) return;

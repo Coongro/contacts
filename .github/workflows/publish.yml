@@ -10,6 +10,11 @@ jobs:
     name: Build & Publish to Production
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # El `git push` del tag NO debe disparar el pre-push de husky (`npm run
+    # quality` → prettier flotante falla en CI). El publish a Verdaccio prod
+    # ocurre antes, pero sin esto el tag + GitHub Release se pierden.
+    env:
+      HUSKY: 0
     permissions:
       contents: write
     steps:

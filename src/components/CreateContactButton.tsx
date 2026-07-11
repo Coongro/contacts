@@ -16,6 +16,7 @@ export function CreateContactButton(props: CreateContactButtonProps) {
   const {
     defaults = {},
     label = 'Nuevo contacto',
+    submitLabel = 'Crear contacto',
     extraFields = [],
     onSuccess,
     variant = 'primary',
@@ -58,7 +59,7 @@ export function CreateContactButton(props: CreateContactButtonProps) {
       onOpenChange: setOpen,
       title: label,
       size: 'md',
-      submitLabel: 'Crear contacto',
+      submitLabel,
       onCancel: () => setOpen(false),
       disabled: saving,
       children: ({ formRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
