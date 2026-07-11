@@ -4,7 +4,7 @@
 // al shippear el CSS propio del plugin (assets.styles) la ficha rinde sola y el
 // dark mode sale gratis (todas resuelven a var(--cg-*)). preflight:false evita
 // duplicar el reset de Tailwind con el del host (mismo patrón que kit-veterinary).
-const baseConfig = require('../../packages/tailwind-config/index.cjs');
+const baseConfig = require('./tailwind-preset.cjs');
 
 module.exports = {
   presets: [baseConfig],
