@@ -1,5 +1,23 @@
 # @coongro/contacts
 
+## 1.3.0
+
+### Minor Changes
+
+- 439ee0c: feat(COONG-208): rediseño de ContactDetail
+
+  Card de identidad con avatar de iniciales, eyebrow del tipo, badge
+  activo/inactivo y riel de datos de contacto (teléfono/email/dirección/
+  documento con iconos). Banner de inactivo, notas, metadata y secciones
+  inyectables. Tokens semánticos `cg-*` (dark mode) e iconos Lucide.
+
+- b6a418e: fix(detail): contact schema updated_at now uses .$onUpdate() for proper timestamp refresh; ContactDetail timestamps wrapped in compact Card with es-AR locale (COONG-112)
+- b6a418e: refactor(ui): adopt FormSection + FormDialogSubmit from `@coongro/ui-components` 0.28.0 (COONG-112)
+
+  - `ContactForm` ahora envuelve cada sección (Información personal, Contacto, Documento, Dirección, Notas, Estado) en `UI.FormSection` (Card + ícono + título), reemplazando el helper local `renderSectionHeader`.
+  - `CreateContactButton` migra a `UI.FormDialogSubmit`: footer sticky con botones Cancelar/Crear contacto siempre visibles.
+  - `ContactFormProps` extendida con `formRef`, `hideActions`, `onSavingChange` para integrarse en footers externos. Compatible hacia atrás (todas opcionales).
+
 ## 1.2.0
 
 ### Minor Changes
