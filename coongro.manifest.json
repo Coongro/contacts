@@ -15,7 +15,23 @@
       {
         "module": "./dist/repositories/contact.repository.js",
         "export": "ContactRepository",
-        "prefix": "contacts"
+        "prefix": "contacts",
+        "actions": [
+          "list",
+          "getById",
+          "create",
+          "update",
+          "delete",
+          "softDelete",
+          "restore",
+          "search",
+          "findByDocument",
+          "findByEmail",
+          "listTags",
+          "findByTag",
+          "bulkCreate",
+          "countByType"
+        ]
       }
     ]
   }
