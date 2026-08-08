@@ -1,6 +1,6 @@
 {
   "id": "contacts",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "apiVersion": "2.0",
   "assets": {
     "styles": [
@@ -66,7 +66,12 @@
               "label": "Nombre",
               "format": "text"
             },
-            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "type",
+              "name": "type",
+              "label": "Rol",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -113,10 +118,14 @@
             "id": {
               "type": "string",
               "description": "El contacto que se quiere ver.",
-              "ref": { "resource": "contacts" }
+              "ref": {
+                "resource": "contacts"
+              }
             }
           },
-          "required": ["id"],
+          "required": [
+            "id"
+          ],
           "additionalProperties": false
         },
         "output": {
@@ -128,7 +137,12 @@
               "label": "Nombre",
               "format": "text"
             },
-            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "type",
+              "name": "type",
+              "label": "Rol",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -210,7 +224,12 @@
               "label": "Nombre",
               "format": "text"
             },
-            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "type",
+              "name": "type",
+              "label": "Rol",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -270,7 +289,10 @@
                   "type": "string",
                   "description": "Teléfono de contacto."
                 },
-                "email": { "type": "string", "description": "Email." },
+                "email": {
+                  "type": "string",
+                  "description": "Email."
+                },
                 "document_type": {
                   "type": "string",
                   "description": "Qué documento es: CUIT, CUIL o DNI."
@@ -283,13 +305,21 @@
                   "type": "string",
                   "description": "Domicilio de la persona — no el del inmueble que alquila."
                 },
-                "notes": { "type": "string", "description": "Notas." }
+                "notes": {
+                  "type": "string",
+                  "description": "Notas."
+                }
               },
-              "required": ["type", "name"],
+              "required": [
+                "type",
+                "name"
+              ],
               "additionalProperties": false
             }
           },
-          "required": ["data"],
+          "required": [
+            "data"
+          ],
           "additionalProperties": false
         },
         "output": {
@@ -301,7 +331,12 @@
               "label": "Nombre",
               "format": "text"
             },
-            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "type",
+              "name": "type",
+              "label": "Rol",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -346,7 +381,9 @@
             "id": {
               "type": "string",
               "description": "El contacto a editar.",
-              "ref": { "resource": "contacts" }
+              "ref": {
+                "resource": "contacts"
+              }
             },
             "data": {
               "type": "object",
@@ -364,7 +401,10 @@
                   "type": "string",
                   "description": "Teléfono de contacto."
                 },
-                "email": { "type": "string", "description": "Email." },
+                "email": {
+                  "type": "string",
+                  "description": "Email."
+                },
                 "document_type": {
                   "type": "string",
                   "description": "Qué documento es: CUIT, CUIL o DNI."
@@ -377,12 +417,18 @@
                   "type": "string",
                   "description": "Domicilio de la persona — no el del inmueble que alquila."
                 },
-                "notes": { "type": "string", "description": "Notas." }
+                "notes": {
+                  "type": "string",
+                  "description": "Notas."
+                }
               },
               "additionalProperties": false
             }
           },
-          "required": ["id", "data"],
+          "required": [
+            "id",
+            "data"
+          ],
           "additionalProperties": false
         },
         "output": {
@@ -394,7 +440,12 @@
               "label": "Nombre",
               "format": "text"
             },
-            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "type",
+              "name": "type",
+              "label": "Rol",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
