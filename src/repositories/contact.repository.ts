@@ -42,8 +42,10 @@ export class ContactRepository {
   }
 
   async create({ data }: { data: NewContactRow }): Promise<ContactRow[]> {
-    const row = { ...data, id: data.id ?? crypto.randomUUID() };
-    return this.db.ormQuery((tx) => tx.insert(contactTable).values(row).returning());
+    // El id lo pone la tabla (`defaultRandom`). Generarlo acá solo cubría a quien
+    // entrara por este repositorio, y los kits que crean contactos por su cuenta
+    // quedaban afuera. Si `data` trae un id, se respeta.
+    return this.db.ormQuery((tx) => tx.insert(contactTable).values(data).returning());
   }
 
   async update({ id, data }: { id: string; data: Partial<NewContactRow> }): Promise<ContactRow[]> {

@@ -15,8 +15,419 @@
       {
         "module": "./dist/repositories/contact.repository.js",
         "export": "ContactRepository",
-        "prefix": "contacts"
+        "prefix": "contacts",
+        "actions": [
+          "list",
+          "getById",
+          "create",
+          "update",
+          "delete",
+          "softDelete",
+          "restore",
+          "search",
+          "findByDocument",
+          "findByEmail",
+          "listTags",
+          "findByTag",
+          "bulkCreate",
+          "countByType"
+        ]
       }
-    ]
+    ],
+    "actionContracts": "./dist/agentic/contracts.js",
+    "copilotCapabilities": [
+      {
+        "id": "contacts.list",
+        "action": "contacts.list",
+        "title": "Listar contactos",
+        "description": "Toda la agenda: propietarios, inquilinos, garantes y proveedores juntos. Para encontrar a alguien puntual conviene «Buscar un contacto», que filtra por nombre, documento, teléfono, email o rol.",
+        "effect": "read",
+        "confirmation": "never",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Cantidad de resultados a devolver. Default 20; máximo 50."
+            },
+            "offset": {
+              "type": "integer",
+              "description": "Cantidad de resultados a saltear para pedir la página siguiente."
+            }
+          },
+          "additionalProperties": false
+        },
+        "output": {
+          "kind": "collection",
+          "fields": [
+            {
+              "key": "name",
+              "name": "name",
+              "label": "Nombre",
+              "format": "text"
+            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "document_number",
+              "name": "documentNumber",
+              "label": "Documento",
+              "format": "text"
+            },
+            {
+              "key": "phone",
+              "name": "phone",
+              "label": "Teléfono",
+              "format": "text"
+            },
+            {
+              "key": "email",
+              "name": "email",
+              "label": "Email",
+              "format": "text"
+            }
+          ],
+          "identifierKey": "id",
+          "defaultLimit": 20,
+          "maxLimit": 50
+        },
+        "generatedBy": "agentic-graph",
+        "evidence": {
+          "level": 4,
+          "id": "ejecutado",
+          "floor": 3,
+          "authority": "module",
+          "coverage": "full",
+          "validated": false
+        }
+      },
+      {
+        "id": "contacts.getById",
+        "action": "contacts.getById",
+        "title": "Ver un contacto",
+        "description": "Los datos de una persona: cómo ubicarla, su documento y con qué rol está cargada.",
+        "effect": "read",
+        "confirmation": "never",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "El contacto que se quiere ver.",
+              "ref": { "resource": "contacts" }
+            }
+          },
+          "required": ["id"],
+          "additionalProperties": false
+        },
+        "output": {
+          "kind": "record",
+          "fields": [
+            {
+              "key": "name",
+              "name": "name",
+              "label": "Nombre",
+              "format": "text"
+            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "document_number",
+              "name": "documentNumber",
+              "label": "Documento",
+              "format": "text"
+            },
+            {
+              "key": "phone",
+              "name": "phone",
+              "label": "Teléfono",
+              "format": "text"
+            },
+            {
+              "key": "email",
+              "name": "email",
+              "label": "Email",
+              "format": "text"
+            },
+            {
+              "key": "address",
+              "name": "address",
+              "label": "Domicilio",
+              "format": "text"
+            },
+            {
+              "key": "notes",
+              "name": "notes",
+              "label": "Notas",
+              "format": "text"
+            }
+          ],
+          "identifierKey": "id"
+        },
+        "generatedBy": "agentic-graph",
+        "evidence": {
+          "level": 3,
+          "id": "cruzado",
+          "floor": 3,
+          "authority": "module",
+          "coverage": "full",
+          "validated": false
+        }
+      },
+      {
+        "id": "contacts.search",
+        "action": "contacts.search",
+        "title": "Buscar un contacto",
+        "description": "Encuentra a una persona por lo que se sabe de ella: el texto busca a la vez en nombre, email, teléfono y número de documento, por coincidencia parcial. Se puede acotar por rol. Es el camino para llegar a alguien cuando se tiene el nombre y no el id — por ejemplo, quién reportó un arreglo o a qué propietario liquidarle.",
+        "effect": "read",
+        "confirmation": "never",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Lo que se sabe: parte del nombre, del email, del teléfono o del documento. No hace falta el dato completo."
+            },
+            "type": {
+              "type": "string",
+              "description": "Acota a un rol: «owner» propietarios, «tenant» inquilinos. Si se omite, busca en toda la agenda."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Cantidad de resultados a devolver. Default 20; máximo 50."
+            },
+            "offset": {
+              "type": "integer",
+              "description": "Cantidad de resultados a saltear para pedir la página siguiente."
+            }
+          },
+          "additionalProperties": false
+        },
+        "output": {
+          "kind": "collection",
+          "fields": [
+            {
+              "key": "name",
+              "name": "name",
+              "label": "Nombre",
+              "format": "text"
+            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "document_number",
+              "name": "documentNumber",
+              "label": "Documento",
+              "format": "text"
+            },
+            {
+              "key": "phone",
+              "name": "phone",
+              "label": "Teléfono",
+              "format": "text"
+            },
+            {
+              "key": "email",
+              "name": "email",
+              "label": "Email",
+              "format": "text"
+            }
+          ],
+          "identifierKey": "id",
+          "defaultLimit": 20,
+          "maxLimit": 50
+        },
+        "generatedBy": "agentic-graph",
+        "evidence": {
+          "level": 4,
+          "id": "ejecutado",
+          "floor": 3,
+          "authority": "module",
+          "coverage": "full",
+          "validated": false
+        }
+      },
+      {
+        "id": "contacts.create",
+        "action": "contacts.create",
+        "title": "Dar de alta un contacto",
+        "description": "Registra a una persona en la agenda. Antes conviene buscarla: la misma persona cargada dos veces termina con el contrato a nombre de una y los pagos a nombre de la otra. El alta no valida duplicados.",
+        "effect": "write",
+        "confirmation": "always",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "description": "Los datos de la persona.",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Con qué rol se lo carga: «owner» para un propietario, «tenant» para un inquilino. Un mismo contacto puede cumplir otro rol en otra unidad — esto es con el que nace, no una etiqueta excluyente."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Nombre y apellido, o la razón social si es una empresa."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Teléfono de contacto."
+                },
+                "email": { "type": "string", "description": "Email." },
+                "document_type": {
+                  "type": "string",
+                  "description": "Qué documento es: CUIT, CUIL o DNI."
+                },
+                "document_number": {
+                  "type": "string",
+                  "description": "El número del documento. Sin él no se puede facturar ni liquidar."
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Domicilio de la persona — no el del inmueble que alquila."
+                },
+                "notes": { "type": "string", "description": "Notas." }
+              },
+              "required": ["type", "name"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["data"],
+          "additionalProperties": false
+        },
+        "output": {
+          "kind": "record",
+          "fields": [
+            {
+              "key": "name",
+              "name": "name",
+              "label": "Nombre",
+              "format": "text"
+            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "document_number",
+              "name": "documentNumber",
+              "label": "Documento",
+              "format": "text"
+            },
+            {
+              "key": "phone",
+              "name": "phone",
+              "label": "Teléfono",
+              "format": "text"
+            },
+            {
+              "key": "email",
+              "name": "email",
+              "label": "Email",
+              "format": "text"
+            }
+          ],
+          "identifierKey": "id"
+        },
+        "generatedBy": "agentic-graph",
+        "evidence": {
+          "level": 4,
+          "id": "ejecutado",
+          "floor": 4,
+          "authority": "module",
+          "coverage": "full",
+          "validated": false
+        }
+      },
+      {
+        "id": "contacts.update",
+        "action": "contacts.update",
+        "title": "Editar un contacto",
+        "description": "Cambia los datos de una persona ya cargada: teléfono, email, documento o domicilio. Cuidado con el rol: pisarlo no la desvincula de nada — sigue siendo la inquilina del contrato que tenga.",
+        "effect": "write",
+        "confirmation": "always",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "El contacto a editar.",
+              "ref": { "resource": "contacts" }
+            },
+            "data": {
+              "type": "object",
+              "description": "Los campos que se quieren cambiar.",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Con qué rol se lo carga: «owner» para un propietario, «tenant» para un inquilino. Un mismo contacto puede cumplir otro rol en otra unidad — esto es con el que nace, no una etiqueta excluyente."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Nombre y apellido, o la razón social si es una empresa."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Teléfono de contacto."
+                },
+                "email": { "type": "string", "description": "Email." },
+                "document_type": {
+                  "type": "string",
+                  "description": "Qué documento es: CUIT, CUIL o DNI."
+                },
+                "document_number": {
+                  "type": "string",
+                  "description": "El número del documento. Sin él no se puede facturar ni liquidar."
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Domicilio de la persona — no el del inmueble que alquila."
+                },
+                "notes": { "type": "string", "description": "Notas." }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["id", "data"],
+          "additionalProperties": false
+        },
+        "output": {
+          "kind": "record",
+          "fields": [
+            {
+              "key": "name",
+              "name": "name",
+              "label": "Nombre",
+              "format": "text"
+            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "document_number",
+              "name": "documentNumber",
+              "label": "Documento",
+              "format": "text"
+            },
+            {
+              "key": "phone",
+              "name": "phone",
+              "label": "Teléfono",
+              "format": "text"
+            },
+            {
+              "key": "email",
+              "name": "email",
+              "label": "Email",
+              "format": "text"
+            }
+          ],
+          "identifierKey": "id"
+        },
+        "generatedBy": "agentic-graph",
+        "evidence": {
+          "level": 4,
+          "id": "ejecutado",
+          "floor": 4,
+          "authority": "module",
+          "coverage": "full",
+          "validated": false
+        }
+      }
+    ],
+    "copilotCatalogFingerprint": "dc7798d68bfd6085a63820ee7ff74940",
+    "copilotCatalogContentFingerprint": "c59d73491303c86799b19f74d29bce27"
   }
 }
