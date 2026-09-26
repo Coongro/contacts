@@ -15,6 +15,13 @@
       "when": 1785730752422,
       "tag": "0001_low_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790436706954,
+      "tag": "0002_crm_person_organization",
+      "breakpoints": true
     }
   ]
 }

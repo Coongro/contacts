@@ -1,5 +1,5 @@
 import type { ModuleDatabaseAPI } from '@coongro/plugin-sdk';
-import { eq, and, or, ilike, isNull, sql, asc, desc } from 'drizzle-orm';
+import { eq, and, or, ilike, isNull, sql, asc, desc, type SQL } from 'drizzle-orm';
 
 import { contactTable } from '../schema/contact.js';
 import type { ContactRow, NewContactRow } from '../schema/contact.js';
@@ -7,6 +7,8 @@ import type { ContactRow, NewContactRow } from '../schema/contact.js';
 export interface SearchParams {
   query?: string;
   type?: string;
+  kind?: string;
+  organizationId?: string;
   tags?: string[];
   isActive?: boolean;
   includeDeleted?: boolean;
@@ -14,6 +16,17 @@ export interface SearchParams {
   offset?: number;
   orderBy?: string;
   orderDir?: 'asc' | 'desc';
+}
+
+export interface ListParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface CountParams {
+  type?: string;
+  kind?: string;
+  includeDeleted?: boolean;
 }
 
 export interface CountByTypeResult {
@@ -28,10 +41,24 @@ export class ContactRepository {
   // CRUD base
   // ---------------------------------------------------------------------------
 
-  async list(): Promise<ContactRow[]> {
-    return this.db.ormQuery((tx) =>
-      tx.select().from(contactTable).where(isNull(contactTable.deleted_at))
-    );
+  /**
+   * Sin paginación por defecto: billing, maintenance, leases y otros kits esperan la
+   * agenda completa. `limit`/`offset` solo aplican si se pasan.
+   */
+  async list({ limit, offset }: ListParams = {}): Promise<ContactRow[]> {
+    return this.db.ormQuery((tx) => {
+      let q = tx.select().from(contactTable).where(isNull(contactTable.deleted_at));
+      if (limit || offset) {
+        q = q.orderBy(desc(contactTable.created_at), asc(contactTable.id)) as typeof q;
+      }
+      if (limit) {
+        q = q.limit(limit) as typeof q;
+      }
+      if (offset) {
+        q = q.offset(offset) as typeof q;
+      }
+      return q;
+    });
   }
 
   async getById({ id }: { id: string }): Promise<ContactRow | undefined> {
@@ -90,6 +117,8 @@ export class ContactRepository {
   async search({
     query,
     type,
+    kind,
+    organizationId,
     tags,
     isActive,
     includeDeleted,
@@ -121,6 +150,14 @@ export class ContactRepository {
         conditions.push(eq(contactTable.type, type));
       }
 
+      if (kind) {
+        conditions.push(eq(contactTable.kind, kind));
+      }
+
+      if (organizationId) {
+        conditions.push(eq(contactTable.organization_id, organizationId));
+      }
+
       if (isActive !== undefined) {
         conditions.push(eq(contactTable.is_active, isActive));
       }
@@ -145,6 +182,7 @@ export class ContactRepository {
       const sortableColumns: Record<string, () => typeof q> = {
         name: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.name)) as typeof q,
         type: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.type)) as typeof q,
+        kind: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.kind)) as typeof q,
         phone: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.phone)) as typeof q,
         email: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.email)) as typeof q,
         is_active: () =>
@@ -207,6 +245,23 @@ export class ContactRepository {
   }
 
   // ---------------------------------------------------------------------------
+  // Organizaciones
+  // ---------------------------------------------------------------------------
+
+  /** Las personas (o lo que sea) que pertenecen a una organización. */
+  async listByOrganization({ organizationId }: { organizationId: string }): Promise<ContactRow[]> {
+    return this.db.ormQuery((tx) =>
+      tx
+        .select()
+        .from(contactTable)
+        .where(
+          and(eq(contactTable.organization_id, organizationId), isNull(contactTable.deleted_at))
+        )
+        .orderBy(asc(contactTable.name))
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Tags
   // ---------------------------------------------------------------------------
 
@@ -243,6 +298,20 @@ export class ContactRepository {
   // ---------------------------------------------------------------------------
   // Stats
   // ---------------------------------------------------------------------------
+
+  async count({ type, kind, includeDeleted }: CountParams = {}): Promise<number> {
+    const rows = await this.db.ormQuery((tx) => {
+      const conditions: SQL[] = [];
+      if (!includeDeleted) conditions.push(isNull(contactTable.deleted_at));
+      if (type) conditions.push(eq(contactTable.type, type));
+      if (kind) conditions.push(eq(contactTable.kind, kind));
+      return tx
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(contactTable)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+    });
+    return Number(rows[0]?.count ?? 0);
+  }
 
   async countByType(): Promise<CountByTypeResult[]> {
     const rows = await this.db.ormQuery((tx) =>

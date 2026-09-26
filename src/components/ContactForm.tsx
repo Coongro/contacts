@@ -133,6 +133,11 @@ export function ContactForm(props: ContactFormProps) {
         }
       }
 
+      // El selector de este formulario mezcla rol con persona/empresa: se refleja en
+      // `kind` con la misma regla que el backfill. Otros valores de `type` no lo tocan.
+      if (baseData.type === 'company') baseData.kind = 'organization';
+      else if (baseData.type === 'person') baseData.kind = 'person';
+
       let result: Contact | null;
       if (isEdit && contactId) {
         result = await update(contactId, baseData as unknown as ContactCreateData);
