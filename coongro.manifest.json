@@ -66,12 +66,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -118,14 +113,10 @@
             "id": {
               "type": "string",
               "description": "El contacto que se quiere ver.",
-              "ref": {
-                "resource": "contacts"
-              }
+              "ref": { "resource": "contacts" }
             }
           },
-          "required": [
-            "id"
-          ],
+          "required": ["id"],
           "additionalProperties": false
         },
         "output": {
@@ -137,12 +128,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -224,12 +210,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -289,10 +270,7 @@
                   "type": "string",
                   "description": "Teléfono de contacto."
                 },
-                "email": {
-                  "type": "string",
-                  "description": "Email."
-                },
+                "email": { "type": "string", "description": "Email." },
                 "document_type": {
                   "type": "string",
                   "description": "Qué documento es: CUIT, CUIL o DNI."
@@ -305,21 +283,13 @@
                   "type": "string",
                   "description": "Domicilio de la persona — no el del inmueble que alquila."
                 },
-                "notes": {
-                  "type": "string",
-                  "description": "Notas."
-                }
+                "notes": { "type": "string", "description": "Notas." }
               },
-              "required": [
-                "type",
-                "name"
-              ],
+              "required": ["type", "name"],
               "additionalProperties": false
             }
           },
-          "required": [
-            "data"
-          ],
+          "required": ["data"],
           "additionalProperties": false
         },
         "output": {
@@ -331,12 +301,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -381,9 +346,7 @@
             "id": {
               "type": "string",
               "description": "El contacto a editar.",
-              "ref": {
-                "resource": "contacts"
-              }
+              "ref": { "resource": "contacts" }
             },
             "data": {
               "type": "object",
@@ -401,10 +364,7 @@
                   "type": "string",
                   "description": "Teléfono de contacto."
                 },
-                "email": {
-                  "type": "string",
-                  "description": "Email."
-                },
+                "email": { "type": "string", "description": "Email." },
                 "document_type": {
                   "type": "string",
                   "description": "Qué documento es: CUIT, CUIL o DNI."
@@ -417,18 +377,12 @@
                   "type": "string",
                   "description": "Domicilio de la persona — no el del inmueble que alquila."
                 },
-                "notes": {
-                  "type": "string",
-                  "description": "Notas."
-                }
+                "notes": { "type": "string", "description": "Notas." }
               },
               "additionalProperties": false
             }
           },
-          "required": [
-            "id",
-            "data"
-          ],
+          "required": ["id", "data"],
           "additionalProperties": false
         },
         "output": {
@@ -440,12 +394,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -479,6 +428,50 @@
       }
     ],
     "copilotCatalogFingerprint": "dc7798d68bfd6085a63820ee7ff74940",
-    "copilotCatalogContentFingerprint": "c59d73491303c86799b19f74d29bce27"
+    "copilotCatalogContentFingerprint": "c59d73491303c86799b19f74d29bce27",
+    "permissions": [
+      {
+        "id": "contacts.manage",
+        "label": "Gestionar contactos",
+        "effect": "write",
+        "grants": {
+          "actions": [
+            "contacts.bulkCreate",
+            "contacts.create",
+            "contacts.restore",
+            "contacts.softDelete",
+            "contacts.update"
+          ]
+        },
+        "requires": ["contacts.read"],
+        "generatedBy": "builder"
+      },
+      {
+        "id": "contacts.read",
+        "label": "Ver contactos",
+        "effect": "read",
+        "grants": {
+          "actions": [
+            "contacts.countByType",
+            "contacts.findByDocument",
+            "contacts.findByEmail",
+            "contacts.findByTag",
+            "contacts.getById",
+            "contacts.list",
+            "contacts.listTags",
+            "contacts.search"
+          ]
+        },
+        "generatedBy": "builder"
+      },
+      {
+        "id": "contacts.delete",
+        "label": "Eliminar contactos",
+        "effect": "destructive",
+        "grants": { "actions": ["contacts.delete"] },
+        "requires": ["contacts.read"],
+        "generatedBy": "builder"
+      }
+    ]
   }
 }
