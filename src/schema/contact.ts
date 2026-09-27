@@ -54,6 +54,14 @@ export const contactTable = pgTable(
     // Un contacto nace activo. Sin default, cada escritor externo tiene que saberlo:
     // `properties` ya lo descubrió a los golpes y lo dejó anotado en su insert.
     is_active: boolean('is_active').notNull().default(true),
+    // Contacto absorbido por una fusión: queda borrado y apunta al que lo absorbió, para
+    // que un link viejo o un plugin atrasado pueda seguir la pista.
+    merged_into_id: uuid('merged_into_id'),
+    // Solo los dígitos de `phone`, calculado por la base: los kits que insertan directo en
+    // la tabla no tienen que saber que existe. Lo usa la detección de duplicados.
+    phone_normalized: text('phone_normalized').generatedAlwaysAs(
+      sql`nullif(regexp_replace(coalesce("phone", ''), '[^0-9]', '', 'g'), '')`
+    ),
     deleted_at: timestamp('deleted_at', { mode: 'string' }),
     created_at: timestamp('created_at', { mode: 'string' })
       .notNull()
@@ -70,6 +78,11 @@ export const contactTable = pgTable(
     index('module_contacts_contacts_organization_id_idx').on(table.organization_id),
     index('module_contacts_contacts_kind_idx').on(table.kind),
     index('module_contacts_contacts_deleted_at_idx').on(table.deleted_at),
+    index('module_contacts_contacts_email_lower_idx').on(sql`lower(${table.email})`),
+    index('module_contacts_contacts_phone_normalized_idx').on(table.phone_normalized),
+    index('module_contacts_contacts_merged_into_id_idx').on(table.merged_into_id),
+    // El índice trigram por nombre (gin, `lower(f_unaccent(name))`) se crea en la migración
+    // 0004: Drizzle no expresa la clase de operador.
   ]
 );
 

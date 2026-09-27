@@ -29,7 +29,10 @@
           "bulkCreate",
           "countByType",
           "listByOrganization",
-          "count"
+          "count",
+          "findDuplicates",
+          "scanDuplicates",
+          "merge"
         ]
       }
     ],

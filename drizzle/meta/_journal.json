@@ -29,6 +29,13 @@
       "when": 1790438703117,
       "tag": "0003_backfill_kind_spanish_types",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790501613097,
+      "tag": "0004_duplicates_and_merge",
+      "breakpoints": true
     }
   ]
 }
