@@ -3,7 +3,10 @@
   "version": "1.4.0",
   "apiVersion": "2.0",
   "assets": {
-    "styles": ["./dist/assets/tailwind.css", "./dist/assets/fontawesome/css/all.min.css"]
+    "styles": [
+      "./dist/assets/tailwind.css",
+      "./dist/assets/fontawesome/css/all.min.css"
+    ]
   },
   "contributes": {
     "menus": [],
@@ -68,12 +71,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "kind",
               "name": "kind",
@@ -126,9 +124,7 @@
             "id": {
               "type": "string",
               "description": "El contacto que se quiere ver.",
-              "ref": {
-                "resource": "contacts"
-              }
+              "ref": { "resource": "contacts" }
             }
           },
           "required": ["id"],
@@ -143,12 +139,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "kind",
               "name": "kind",
@@ -242,9 +233,7 @@
             "organizationId": {
               "type": "string",
               "description": "Acota a las personas que pertenecen a esta organización.",
-              "ref": {
-                "resource": "contacts"
-              }
+              "ref": { "resource": "contacts" }
             },
             "limit": {
               "type": "integer",
@@ -266,12 +255,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "kind",
               "name": "kind",
@@ -353,9 +337,7 @@
                 "organization_id": {
                   "type": "string",
                   "description": "La organización a la que pertenece esta persona: otro contacto cargado como organización.",
-                  "ref": {
-                    "resource": "contacts"
-                  }
+                  "ref": { "resource": "contacts" }
                 },
                 "phone": {
                   "type": "string",
@@ -364,22 +346,13 @@
                 "additional_phones": {
                   "type": "array",
                   "description": "Otros teléfonos, además del principal. Reemplaza la lista entera.",
-                  "items": {
-                    "type": "string",
-                    "description": "Un teléfono."
-                  }
+                  "items": { "type": "string", "description": "Un teléfono." }
                 },
-                "email": {
-                  "type": "string",
-                  "description": "Email principal."
-                },
+                "email": { "type": "string", "description": "Email principal." },
                 "additional_emails": {
                   "type": "array",
                   "description": "Otros emails, además del principal. Reemplaza la lista entera.",
-                  "items": {
-                    "type": "string",
-                    "description": "Un email."
-                  }
+                  "items": { "type": "string", "description": "Un email." }
                 },
                 "website": {
                   "type": "string",
@@ -425,10 +398,7 @@
                   "type": "string",
                   "description": "La persona del equipo responsable de este contacto."
                 },
-                "notes": {
-                  "type": "string",
-                  "description": "Notas."
-                }
+                "notes": { "type": "string", "description": "Notas." }
               },
               "required": ["type", "name"],
               "additionalProperties": false
@@ -446,12 +416,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "kind",
               "name": "kind",
@@ -502,9 +467,7 @@
             "id": {
               "type": "string",
               "description": "El contacto a editar.",
-              "ref": {
-                "resource": "contacts"
-              }
+              "ref": { "resource": "contacts" }
             },
             "data": {
               "type": "object",
@@ -538,9 +501,7 @@
                 "organization_id": {
                   "type": "string",
                   "description": "La organización a la que pertenece esta persona: otro contacto cargado como organización.",
-                  "ref": {
-                    "resource": "contacts"
-                  }
+                  "ref": { "resource": "contacts" }
                 },
                 "phone": {
                   "type": "string",
@@ -549,22 +510,13 @@
                 "additional_phones": {
                   "type": "array",
                   "description": "Otros teléfonos, además del principal. Reemplaza la lista entera.",
-                  "items": {
-                    "type": "string",
-                    "description": "Un teléfono."
-                  }
+                  "items": { "type": "string", "description": "Un teléfono." }
                 },
-                "email": {
-                  "type": "string",
-                  "description": "Email principal."
-                },
+                "email": { "type": "string", "description": "Email principal." },
                 "additional_emails": {
                   "type": "array",
                   "description": "Otros emails, además del principal. Reemplaza la lista entera.",
-                  "items": {
-                    "type": "string",
-                    "description": "Un email."
-                  }
+                  "items": { "type": "string", "description": "Un email." }
                 },
                 "website": {
                   "type": "string",
@@ -610,10 +562,7 @@
                   "type": "string",
                   "description": "La persona del equipo responsable de este contacto."
                 },
-                "notes": {
-                  "type": "string",
-                  "description": "Notas."
-                }
+                "notes": { "type": "string", "description": "Notas." }
               },
               "additionalProperties": false
             }
@@ -630,12 +579,7 @@
               "label": "Nombre",
               "format": "text"
             },
-            {
-              "key": "type",
-              "name": "type",
-              "label": "Rol",
-              "format": "text"
-            },
+            { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
               "key": "kind",
               "name": "kind",
@@ -678,24 +622,9 @@
     "copilotCatalogContentFingerprint": "c59d73491303c86799b19f74d29bce27",
     "permissions": [
       {
-        "id": "contacts.manage",
-        "label": "Gestionar contactos",
-        "effect": "write",
-        "grants": {
-          "actions": [
-            "contacts.bulkCreate",
-            "contacts.create",
-            "contacts.restore",
-            "contacts.softDelete",
-            "contacts.update"
-          ]
-        },
-        "requires": ["contacts.read"],
-        "generatedBy": "builder"
-      },
-      {
         "id": "contacts.read",
         "label": "Ver contactos",
+        "description": "Consultar la agenda de contactos, buscarlos y ver los posibles duplicados.",
         "effect": "read",
         "grants": {
           "actions": [
@@ -704,24 +633,40 @@
             "contacts.findByDocument",
             "contacts.findByEmail",
             "contacts.findByTag",
+            "contacts.findDuplicates",
             "contacts.getById",
             "contacts.list",
             "contacts.listByOrganization",
             "contacts.listTags",
             "contacts.search"
           ]
+        }
+      },
+      {
+        "id": "contacts.manage",
+        "label": "Gestionar contactos",
+        "description": "Crear y editar contactos, cargarlos en lote, buscar duplicados y fusionarlos en uno.",
+        "effect": "write",
+        "grants": {
+          "actions": [
+            "contacts.bulkCreate",
+            "contacts.create",
+            "contacts.merge",
+            "contacts.restore",
+            "contacts.scanDuplicates",
+            "contacts.softDelete",
+            "contacts.update"
+          ]
         },
-        "generatedBy": "builder"
+        "requires": ["contacts.read"]
       },
       {
         "id": "contacts.delete",
-        "label": "Eliminar contactos",
+        "label": "Eliminar contactos definitivamente",
+        "description": "Borrar un contacto para siempre, sin poder recuperarlo.",
         "effect": "destructive",
-        "grants": {
-          "actions": ["contacts.delete"]
-        },
-        "requires": ["contacts.read"],
-        "generatedBy": "builder"
+        "grants": { "actions": ["contacts.delete"] },
+        "requires": ["contacts.read"]
       }
     ]
   }
