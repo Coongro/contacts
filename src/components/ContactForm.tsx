@@ -6,6 +6,7 @@ import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { useContact } from '../hooks/useContact.js';
 import { useContactMutations } from '../hooks/useContactMutations.js';
+import { kindFromType } from '../lib/kindFromType.js';
 import type { ContactFormProps, FieldDef } from '../types/components.js';
 import type { Contact, ContactCreateData } from '../types/contact.js';
 
@@ -132,6 +133,11 @@ export function ContactForm(props: ContactFormProps) {
           extraData[key] = value;
         }
       }
+
+      // El selector de este formulario mezcla rol con persona/empresa: se refleja en
+      // `kind` con la misma regla que el backfill. Otros valores de `type` no lo tocan.
+      const kind = kindFromType(baseData.type);
+      if (kind) baseData.kind = kind;
 
       let result: Contact | null;
       if (isEdit && contactId) {
