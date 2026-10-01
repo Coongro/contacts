@@ -1,0 +1,1170 @@
+{
+  "version": 1,
+  "pluginId": "contacts",
+  "overrides": {},
+  "nodes": {
+    "cmd:contacts.bulkCreate": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.bulkCreate",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "Alta masiva sin ninguna comprobación de duplicados: inserta el lote tal cual. Es la herramienta de una importación, donde alguien mira el archivo antes; para un agente es la forma más rápida de duplicar la agenda entera y dejar dos «Ana María Ruiz» compitiendo por el mismo contrato. El alta de a uno (`create`) cubre lo que un agente necesita hacer.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.countByType": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.countByType",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "Cuántos contactos hay de cada tipo: es el número de un tablero, no una pregunta que alguien le haga al asistente mientras trabaja. `search` filtrando por tipo responde lo mismo y además dice QUIÉNES son, que es lo que después se usa.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.create": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.create",
+        "argSchemas": {
+          "data": {
+            "additionalProperties": false,
+            "description": "Los datos de la persona.",
+            "properties": {
+              "address": {
+                "description": "Domicilio de la persona — no el del inmueble que alquila.",
+                "type": "string"
+              },
+              "document_number": {
+                "description": "El número del documento. Sin él no se puede facturar ni liquidar.",
+                "type": "string"
+              },
+              "document_type": {
+                "description": "Qué documento es: CUIT, CUIL o DNI.",
+                "type": "string"
+              },
+              "email": {
+                "description": "Email.",
+                "type": "string"
+              },
+              "name": {
+                "description": "Nombre y apellido, o la razón social si es una empresa.",
+                "type": "string"
+              },
+              "notes": {
+                "description": "Notas.",
+                "type": "string"
+              },
+              "phone": {
+                "description": "Teléfono de contacto.",
+                "type": "string"
+              },
+              "type": {
+                "description": "Con qué rol se lo carga: «owner» para un propietario, «tenant» para un inquilino. Un mismo contacto puede cumplir otro rol en otra unidad — esto es con el que nace, no una etiqueta excluyente.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        "args": [
+          {
+            "description": "Los datos de la persona.",
+            "label": "data",
+            "name": "data",
+            "required": true,
+            "resource": null,
+            "type": "object"
+          }
+        ],
+        "confirmation": "always",
+        "contractAuthority": true,
+        "contractDraft": {
+          "confidence": "media",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "additionalProperties": false,
+                "description": "Campos de Contact.",
+                "properties": {
+                  "address": {
+                    "description": "Address",
+                    "type": "string"
+                  },
+                  "avatar_url": {
+                    "description": "Avatar url",
+                    "type": "string"
+                  },
+                  "document_number": {
+                    "description": "Document number",
+                    "type": "string"
+                  },
+                  "document_type": {
+                    "description": "Document type",
+                    "type": "string"
+                  },
+                  "email": {
+                    "description": "Email",
+                    "type": "string"
+                  },
+                  "is_active": {
+                    "description": "Is active",
+                    "type": "boolean"
+                  },
+                  "metadata": {
+                    "description": "Metadata",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "Notes",
+                    "type": "string"
+                  },
+                  "phone": {
+                    "description": "Phone",
+                    "type": "string"
+                  },
+                  "tags": {
+                    "description": "Tags",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "type": "object"
+          },
+          "source": "drizzle"
+        },
+        "description": "Registra a una persona en la agenda. Antes conviene buscarla: la misma persona cargada dos veces termina con el contrato a nombre de una y los pagos a nombre de la otra. El alta no valida duplicados.",
+        "effect": "write",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [
+          "createRef:contacts"
+        ],
+        "permissions": [],
+        "preconditions": [],
+        "requiredArgs": [
+          "data"
+        ],
+        "tenantScope": "required",
+        "title": "Dar de alta un contacto",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "generated",
+        "args": "custom",
+        "argSchemas": "custom",
+        "confirmation": "custom",
+        "contractAuthority": "generated",
+        "contractDraft": "user",
+        "description": "generated",
+        "effect": "custom",
+        "idempotent": "user",
+        "outputs": "custom",
+        "permissions": "user",
+        "preconditions": "user",
+        "requiredArgs": "custom",
+        "tenantScope": "custom",
+        "title": "generated",
+        "transactional": "user"
+      }
+    },
+    "cmd:contacts.delete": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.delete",
+        "argSchemas": {
+          "id": {
+            "description": "ID del registro.",
+            "ref": {
+              "resource": "contacts"
+            },
+            "type": "string"
+          }
+        },
+        "args": [
+          {
+            "description": "ID del registro.",
+            "label": "id",
+            "name": "id",
+            "required": true,
+            "resource": "contacts",
+            "type": "ref"
+          }
+        ],
+        "confirmation": "always",
+        "contract": {
+          "confirmation": "always",
+          "description": "Ejecuta contacts.delete.",
+          "effect": "destructive",
+          "generatedBy": "builder-high-confidence",
+          "id": "contacts.delete",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "ID del registro.",
+                "ref": {
+                  "resource": "contacts"
+                },
+                "type": "string"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "tenantScope": "required",
+          "title": "Delete"
+        },
+        "contractAdoption": {
+          "confidence": "alta",
+          "kind": "automatic",
+          "source": "drizzle"
+        },
+        "contractAuthority": true,
+        "contractDraft": {
+          "confidence": "alta",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "ID del registro.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "source": "drizzle"
+        },
+        "description": "Ejecuta contacts.delete.",
+        "effect": "destructive",
+        "excluded": true,
+        "excludedReason": "Borrado FÍSICO (`tx.delete`), no lógico: la fila desaparece de la base. Un contacto es la persona a la que apuntan el inquilino de un contrato vigente, el propietario de una unidad, el garante y el proveedor de un arreglo — ninguna de esas referencias es una FK que la base defienda, así que el borrado no falla: deja contratos, titularidades y órdenes de trabajo apuntando a alguien que ya no existe, sin forma de recuperarlo. Ninguna pantalla lo ejercita. Para dar de baja a alguien está `softDelete`, y ese también necesita mirar de qué cuelga antes de publicarse.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "requiredArgs": [
+          "id"
+        ],
+        "tenantScope": "required",
+        "title": "Delete",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "generated",
+        "args": "custom",
+        "argSchemas": "custom",
+        "confirmation": "custom",
+        "contract": "user",
+        "contractAdoption": "user",
+        "contractAuthority": "generated",
+        "contractDraft": "user",
+        "description": "generated",
+        "effect": "custom",
+        "excluded": "user",
+        "excludedReason": "user",
+        "idempotent": "user",
+        "outputs": "custom",
+        "permissions": "user",
+        "preconditions": "user",
+        "requiredArgs": "custom",
+        "tenantScope": "custom",
+        "title": "generated",
+        "transactional": "user"
+      }
+    },
+    "cmd:contacts.findByDocument": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.findByDocument",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "`contacts.search` ya busca por número de documento con el mismo texto libre que usa para nombre, email y teléfono. Un camino más específico para lo que el general ya cubre solo agrega una decisión que el agente puede errar.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.findByEmail": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.findByEmail",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "`contacts.search` ya busca por email, junto con nombre, teléfono y documento, y además filtra por tipo y etiquetas. Publicar las dos deja al agente eligiendo entre dos caminos para lo mismo — que es exactamente lo que lo hizo elegir el peor en maintenance.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.findByTag": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.findByTag",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "`contacts.search` ya filtra por etiquetas, y de paso permite combinarlo con texto y tipo. Un segundo camino más pobre para lo mismo.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.listTags": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.listTags",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "Devuelve la lista de etiquetas en uso. Sirve para armar un filtro en una pantalla; para un agente que ya puede buscar por etiqueta con `search`, es un paso intermedio que no lo acerca a ninguna tarea.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.restore": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.restore",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "La vuelta de un borrado que no se publica. Sin pantalla que lo use y sin contraparte publicada, no hay caso de negocio que lo pida.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.softDelete": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.softDelete",
+        "argSchemas": {},
+        "args": [],
+        "confirmation": "always",
+        "contractDraft": {
+          "confidence": "no-inferible",
+          "source": "drizzle"
+        },
+        "effect": "write",
+        "excluded": true,
+        "excludedReason": "Marca `deleted_at` sin mirar nada. El inquilino de un contrato vigente desaparecería de las listas mientras su alquiler se sigue cobrando, y lo mismo el propietario al que hay que liquidarle. Es el mismo soft-delete ciego que se excluyó en properties y maintenance, agravado porque contacts es el recurso al que apunta medio kit. Se reevalúa cuando valide dependencias o declare qué se lleva puesto.",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [],
+        "permissions": [],
+        "preconditions": [],
+        "tenantScope": "required",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "inferred",
+        "args": "inferred",
+        "excluded": "user",
+        "excludedReason": "user"
+      }
+    },
+    "cmd:contacts.update": {
+      "type": "agentic.command",
+      "groupId": "ph-operacion",
+      "data": {
+        "actionId": "contacts.update",
+        "argSchemas": {
+          "data": {
+            "additionalProperties": false,
+            "description": "Los campos que se quieren cambiar.",
+            "properties": {
+              "address": {
+                "description": "Domicilio de la persona — no el del inmueble que alquila.",
+                "type": "string"
+              },
+              "document_number": {
+                "description": "El número del documento. Sin él no se puede facturar ni liquidar.",
+                "type": "string"
+              },
+              "document_type": {
+                "description": "Qué documento es: CUIT, CUIL o DNI.",
+                "type": "string"
+              },
+              "email": {
+                "description": "Email.",
+                "type": "string"
+              },
+              "name": {
+                "description": "Nombre y apellido, o la razón social si es una empresa.",
+                "type": "string"
+              },
+              "notes": {
+                "description": "Notas.",
+                "type": "string"
+              },
+              "phone": {
+                "description": "Teléfono de contacto.",
+                "type": "string"
+              },
+              "type": {
+                "description": "Con qué rol se lo carga: «owner» para un propietario, «tenant» para un inquilino. Un mismo contacto puede cumplir otro rol en otra unidad — esto es con el que nace, no una etiqueta excluyente.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "description": "El contacto a editar.",
+            "ref": {
+              "resource": "contacts"
+            },
+            "type": "string"
+          }
+        },
+        "args": [
+          {
+            "description": "El contacto a editar.",
+            "label": "id",
+            "name": "id",
+            "required": true,
+            "resource": "contacts",
+            "type": "ref"
+          },
+          {
+            "description": "Los campos que se quieren cambiar.",
+            "label": "data",
+            "name": "data",
+            "required": true,
+            "resource": null,
+            "type": "object"
+          }
+        ],
+        "confirmation": "always",
+        "contractAuthority": true,
+        "contractDraft": {
+          "confidence": "media",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "additionalProperties": false,
+                "description": "Campos de Contact.",
+                "properties": {
+                  "address": {
+                    "description": "Address",
+                    "type": "string"
+                  },
+                  "avatar_url": {
+                    "description": "Avatar url",
+                    "type": "string"
+                  },
+                  "document_number": {
+                    "description": "Document number",
+                    "type": "string"
+                  },
+                  "document_type": {
+                    "description": "Document type",
+                    "type": "string"
+                  },
+                  "email": {
+                    "description": "Email",
+                    "type": "string"
+                  },
+                  "is_active": {
+                    "description": "Is active",
+                    "type": "boolean"
+                  },
+                  "metadata": {
+                    "description": "Metadata",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Name",
+                    "type": "string"
+                  },
+                  "notes": {
+                    "description": "Notes",
+                    "type": "string"
+                  },
+                  "phone": {
+                    "description": "Phone",
+                    "type": "string"
+                  },
+                  "tags": {
+                    "description": "Tags",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Type",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "id": {
+                "description": "ID del registro.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "data"
+            ],
+            "type": "object"
+          },
+          "source": "drizzle"
+        },
+        "description": "Cambia los datos de una persona ya cargada: teléfono, email, documento o domicilio. Cuidado con el rol: pisarlo no la desvincula de nada — sigue siendo la inquilina del contrato que tenga.",
+        "effect": "write",
+        "idempotent": false,
+        "origin": "inferred",
+        "outputs": [
+          "updateRef:contacts"
+        ],
+        "permissions": [],
+        "preconditions": [],
+        "requiredArgs": [
+          "id",
+          "data"
+        ],
+        "tenantScope": "required",
+        "title": "Editar un contacto",
+        "transactional": false
+      },
+      "prov": {
+        "actionId": "generated",
+        "args": "custom",
+        "argSchemas": "custom",
+        "confirmation": "custom",
+        "contractAuthority": "generated",
+        "contractDraft": "user",
+        "description": "generated",
+        "effect": "custom",
+        "idempotent": "user",
+        "outputs": "custom",
+        "permissions": "user",
+        "preconditions": "user",
+        "requiredArgs": "custom",
+        "tenantScope": "custom",
+        "title": "generated",
+        "transactional": "user"
+      }
+    },
+    "esc:contacts.alta": {
+      "type": "agentic.scenario",
+      "groupId": "ph-pruebas",
+      "data": {
+        "expected": "",
+        "fixtures": {
+          "data": {
+            "document_number": "27114028",
+            "document_type": "dni",
+            "name": "Ana María Ruiz",
+            "type": "tenant"
+          },
+          "query": "Ruiz"
+        },
+        "name": "Dar de alta a alguien que todavía no está",
+        "steps": [
+          "contacts.search",
+          "contacts.create"
+        ]
+      }
+    },
+    "esc:contacts.corregir-datos": {
+      "type": "agentic.scenario",
+      "groupId": "ph-pruebas",
+      "data": {
+        "expected": "",
+        "fixtures": {
+          "data": {
+            "phone": "11 5555-1234"
+          }
+        },
+        "name": "Corregir el teléfono de alguien de la agenda",
+        "steps": [
+          "contacts.list",
+          "contacts.update"
+        ]
+      }
+    },
+    "q:contacts.getById": {
+      "type": "agentic.query",
+      "groupId": "ph-consultas",
+      "data": {
+        "actionId": "contacts.getById",
+        "argSchemas": {
+          "id": {
+            "description": "El contacto que se quiere ver.",
+            "ref": {
+              "resource": "contacts"
+            },
+            "type": "string"
+          }
+        },
+        "args": [
+          {
+            "description": "El contacto que se quiere ver.",
+            "label": "id",
+            "name": "id",
+            "required": true,
+            "resource": "contacts",
+            "type": "ref"
+          }
+        ],
+        "contract": {
+          "confirmation": "never",
+          "description": "Ejecuta contacts.getById.",
+          "effect": "read",
+          "generatedBy": "builder-high-confidence",
+          "id": "contacts.getById",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "ID del registro.",
+                "ref": {
+                  "resource": "contacts"
+                },
+                "type": "string"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "tenantScope": "required",
+          "title": "Get By ID"
+        },
+        "contractAdoption": {
+          "confidence": "alta",
+          "kind": "automatic",
+          "source": "drizzle"
+        },
+        "contractAuthority": true,
+        "contractDraft": {
+          "confidence": "alta",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "ID del registro.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "source": "drizzle"
+        },
+        "description": "Los datos de una persona: cómo ubicarla, su documento y con qué rol está cargada.",
+        "origin": "inferred",
+        "requiredArgs": [
+          "id"
+        ],
+        "resource": "contacts",
+        "title": "Ver un contacto"
+      },
+      "prov": {
+        "actionId": "generated",
+        "args": "custom",
+        "argSchemas": "custom",
+        "contract": "user",
+        "contractAdoption": "user",
+        "contractAuthority": "generated",
+        "contractDraft": "user",
+        "description": "generated",
+        "requiredArgs": "custom",
+        "resource": "generated",
+        "title": "generated"
+      }
+    },
+    "q:contacts.list": {
+      "type": "agentic.query",
+      "groupId": "ph-consultas",
+      "data": {
+        "actionId": "contacts.list",
+        "argSchemas": {
+          "limit": {
+            "description": "Cantidad de resultados a devolver. Default 20; máximo 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Cantidad de resultados a saltear para pedir la página siguiente.",
+            "type": "integer"
+          }
+        },
+        "args": [
+          {
+            "description": "Cantidad de resultados a devolver. Default 20; máximo 50.",
+            "label": "limit",
+            "name": "limit",
+            "required": false,
+            "resource": null,
+            "type": "integer"
+          },
+          {
+            "description": "Cantidad de resultados a saltear para pedir la página siguiente.",
+            "label": "offset",
+            "name": "offset",
+            "required": false,
+            "resource": null,
+            "type": "integer"
+          }
+        ],
+        "contract": {
+          "confirmation": "never",
+          "description": "Ejecuta contacts.list.",
+          "effect": "read",
+          "generatedBy": "builder-high-confidence",
+          "id": "contacts.list",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "description": "Cantidad de resultados.",
+                "type": "integer"
+              },
+              "offset": {
+                "description": "Resultados a saltear.",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "tenantScope": "required",
+          "title": "List"
+        },
+        "contractAdoption": {
+          "confidence": "alta",
+          "kind": "automatic",
+          "source": "drizzle"
+        },
+        "contractAuthority": true,
+        "contractDraft": {
+          "confidence": "alta",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "description": "Cantidad de resultados.",
+                "type": "integer"
+              },
+              "offset": {
+                "description": "Resultados a saltear.",
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "source": "drizzle"
+        },
+        "description": "Toda la agenda: propietarios, inquilinos, garantes y proveedores juntos. Para encontrar a alguien puntual conviene «Buscar un contacto», que filtra por nombre, documento, teléfono, email o rol.",
+        "origin": "inferred",
+        "requiredArgs": [],
+        "resource": "contacts",
+        "title": "Listar contactos"
+      },
+      "prov": {
+        "actionId": "generated",
+        "args": "custom",
+        "argSchemas": "custom",
+        "contract": "user",
+        "contractAdoption": "user",
+        "contractAuthority": "generated",
+        "contractDraft": "user",
+        "description": "generated",
+        "requiredArgs": "custom",
+        "resource": "generated",
+        "title": "generated"
+      }
+    },
+    "q:contacts.search": {
+      "type": "agentic.query",
+      "groupId": "ph-consultas",
+      "data": {
+        "actionId": "contacts.search",
+        "argSchemas": {
+          "limit": {
+            "description": "Cantidad de resultados a devolver. Default 20; máximo 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Cantidad de resultados a saltear para pedir la página siguiente.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Lo que se sabe: parte del nombre, del email, del teléfono o del documento. No hace falta el dato completo.",
+            "type": "string"
+          },
+          "type": {
+            "description": "Acota a un rol: «owner» propietarios, «tenant» inquilinos. Si se omite, busca en toda la agenda.",
+            "type": "string"
+          }
+        },
+        "args": [
+          {
+            "description": "Lo que se sabe: parte del nombre, del email, del teléfono o del documento. No hace falta el dato completo.",
+            "label": "query",
+            "name": "query",
+            "required": false,
+            "resource": null,
+            "type": "string"
+          },
+          {
+            "description": "Acota a un rol: «owner» propietarios, «tenant» inquilinos. Si se omite, busca en toda la agenda.",
+            "label": "type",
+            "name": "type",
+            "required": false,
+            "resource": null,
+            "type": "string"
+          },
+          {
+            "description": "Cantidad de resultados a devolver. Default 20; máximo 50.",
+            "label": "limit",
+            "name": "limit",
+            "required": false,
+            "resource": null,
+            "type": "integer"
+          },
+          {
+            "description": "Cantidad de resultados a saltear para pedir la página siguiente.",
+            "label": "offset",
+            "name": "offset",
+            "required": false,
+            "resource": null,
+            "type": "integer"
+          }
+        ],
+        "contract": {
+          "confirmation": "never",
+          "description": "Ejecuta contacts.search.",
+          "effect": "read",
+          "generatedBy": "builder-high-confidence",
+          "id": "contacts.search",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "description": "Cantidad de resultados.",
+                "type": "integer"
+              },
+              "offset": {
+                "description": "Resultados a saltear.",
+                "type": "integer"
+              },
+              "query": {
+                "description": "Texto a buscar.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "tenantScope": "required",
+          "title": "Search"
+        },
+        "contractAdoption": {
+          "confidence": "alta",
+          "kind": "automatic",
+          "source": "drizzle"
+        },
+        "contractAuthority": true,
+        "contractDraft": {
+          "confidence": "alta",
+          "input": {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "description": "Cantidad de resultados.",
+                "type": "integer"
+              },
+              "offset": {
+                "description": "Resultados a saltear.",
+                "type": "integer"
+              },
+              "query": {
+                "description": "Texto a buscar.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "type": "object"
+          },
+          "source": "drizzle"
+        },
+        "description": "Encuentra a una persona por lo que se sabe de ella: el texto busca a la vez en nombre, email, teléfono y número de documento, por coincidencia parcial. Se puede acotar por rol. Es el camino para llegar a alguien cuando se tiene el nombre y no el id — por ejemplo, quién reportó un arreglo o a qué propietario liquidarle.",
+        "origin": "inferred",
+        "requiredArgs": [],
+        "resource": "contacts",
+        "title": "Buscar un contacto"
+      },
+      "prov": {
+        "actionId": "generated",
+        "args": "custom",
+        "argSchemas": "custom",
+        "contract": "user",
+        "contractAdoption": "user",
+        "contractAuthority": "generated",
+        "contractDraft": "user",
+        "description": "generated",
+        "requiredArgs": "custom",
+        "resource": "generated",
+        "title": "generated"
+      }
+    },
+    "src:cmd:contacts.create:data": {
+      "type": "agentic.agent-input",
+      "groupId": "ph-entradas",
+      "data": {
+        "description": "Campos de Contact.",
+        "examples": [],
+        "name": "data",
+        "options": [],
+        "origin": "user",
+        "required": true,
+        "valueType": "object"
+      }
+    },
+    "src:cmd:contacts.update:data": {
+      "type": "agentic.agent-input",
+      "groupId": "ph-entradas",
+      "data": {
+        "description": "Campos de Contact.",
+        "examples": [],
+        "name": "data",
+        "options": [],
+        "origin": "user",
+        "required": true,
+        "valueType": "object"
+      }
+    },
+    "src:cmd:contacts.update:id": {
+      "type": "agentic.agent-input",
+      "groupId": "ph-entradas",
+      "data": {
+        "description": "ID del registro.",
+        "examples": [],
+        "name": "id",
+        "options": [],
+        "origin": "user",
+        "required": true,
+        "valueType": "string"
+      }
+    },
+    "src:q:contacts.getById:id": {
+      "type": "agentic.agent-input",
+      "groupId": "ph-entradas",
+      "data": {
+        "description": "ID del registro.",
+        "examples": [],
+        "name": "id",
+        "options": [],
+        "origin": "user",
+        "required": true,
+        "valueType": "string"
+      }
+    }
+  },
+  "edges": [
+    {
+      "id": "edge-3qpw1bz",
+      "sourceNodeId": "src:q:contacts.getById:id",
+      "sourcePortId": "value",
+      "targetNodeId": "q:contacts.getById",
+      "targetPortId": "arg-0",
+      "data": {
+        "origin": "user"
+      }
+    },
+    {
+      "id": "edge-43s9lac",
+      "sourceNodeId": "src:cmd:contacts.create:data",
+      "sourcePortId": "value",
+      "targetNodeId": "cmd:contacts.create",
+      "targetPortId": "arg-0",
+      "data": {
+        "origin": "user"
+      }
+    },
+    {
+      "id": "edge-514k6tn",
+      "sourceNodeId": "src:cmd:contacts.update:id",
+      "sourcePortId": "value",
+      "targetNodeId": "cmd:contacts.update",
+      "targetPortId": "arg-0",
+      "data": {
+        "origin": "user"
+      }
+    },
+    {
+      "id": "edge-68pxewv",
+      "sourceNodeId": "src:cmd:contacts.update:data",
+      "sourcePortId": "value",
+      "targetNodeId": "cmd:contacts.update",
+      "targetPortId": "arg-1",
+      "data": {
+        "origin": "user"
+      }
+    }
+  ]
+}
