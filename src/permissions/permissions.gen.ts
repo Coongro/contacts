@@ -1,7 +1,7 @@
 // Generado por el Coongro Builder desde contributes.permissions. No editar a mano.
 
 export const ContactsPermissions = {
-  /** Eliminar contactos */
+  /** Eliminar contactos definitivamente */
   delete: 'contacts.delete',
   /** Gestionar contactos */
   manage: 'contacts.manage',

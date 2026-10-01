@@ -30,7 +30,12 @@
           "listTags",
           "findByTag",
           "bulkCreate",
-          "countByType"
+          "countByType",
+          "listByOrganization",
+          "count",
+          "findDuplicates",
+          "scanDuplicates",
+          "merge"
         ]
       }
     ],
@@ -40,7 +45,7 @@
         "id": "contacts.list",
         "action": "contacts.list",
         "title": "Listar contactos",
-        "description": "Toda la agenda: propietarios, inquilinos, garantes y proveedores juntos. Para encontrar a alguien puntual conviene «Buscar un contacto», que filtra por nombre, documento, teléfono, email o rol.",
+        "description": "Toda la agenda del negocio, personas y organizaciones juntas, sin importar el rol. Para encontrar a alguien puntual conviene «Buscar un contacto», que filtra por nombre, documento, teléfono, email, rol u organización.",
         "effect": "read",
         "confirmation": "never",
         "inputSchema": {
@@ -67,6 +72,12 @@
               "format": "text"
             },
             { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "kind",
+              "name": "kind",
+              "label": "Persona u organización",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -104,7 +115,7 @@
         "id": "contacts.getById",
         "action": "contacts.getById",
         "title": "Ver un contacto",
-        "description": "Los datos de una persona: cómo ubicarla, su documento y con qué rol está cargada.",
+        "description": "Los datos de un contacto: cómo ubicarlo, su documento, con qué rol está cargado y, si es una persona, a qué organización pertenece.",
         "effect": "read",
         "confirmation": "never",
         "inputSchema": {
@@ -130,6 +141,12 @@
             },
             { "key": "type", "name": "type", "label": "Rol", "format": "text" },
             {
+              "key": "kind",
+              "name": "kind",
+              "label": "Persona u organización",
+              "format": "text"
+            },
+            {
               "key": "document_number",
               "name": "documentNumber",
               "label": "Documento",
@@ -145,6 +162,24 @@
               "key": "email",
               "name": "email",
               "label": "Email",
+              "format": "text"
+            },
+            {
+              "key": "job_title",
+              "name": "jobTitle",
+              "label": "Cargo",
+              "format": "text"
+            },
+            {
+              "key": "organization_id",
+              "name": "organizationId",
+              "label": "Organización",
+              "format": "text"
+            },
+            {
+              "key": "website",
+              "name": "website",
+              "label": "Sitio web",
               "format": "text"
             },
             {
@@ -176,7 +211,7 @@
         "id": "contacts.search",
         "action": "contacts.search",
         "title": "Buscar un contacto",
-        "description": "Encuentra a una persona por lo que se sabe de ella: el texto busca a la vez en nombre, email, teléfono y número de documento, por coincidencia parcial. Se puede acotar por rol. Es el camino para llegar a alguien cuando se tiene el nombre y no el id — por ejemplo, quién reportó un arreglo o a qué propietario liquidarle.",
+        "description": "Encuentra un contacto por lo que se sabe de él: el texto busca a la vez en nombre, email, teléfono y número de documento, por coincidencia parcial. Se puede acotar por rol, a personas u organizaciones, o a las personas de una organización. Es el camino para llegar a alguien cuando se tiene el nombre y no el id.",
         "effect": "read",
         "confirmation": "never",
         "inputSchema": {
@@ -188,7 +223,17 @@
             },
             "type": {
               "type": "string",
-              "description": "Acota a un rol: «owner» propietarios, «tenant» inquilinos. Si se omite, busca en toda la agenda."
+              "description": "Acota a un rol, en el vocabulario del kit que lo cargó. Si se omite, busca en toda la agenda."
+            },
+            "kind": {
+              "type": "string",
+              "enum": ["person", "organization"],
+              "description": "Acota a personas («person») o a organizaciones («organization»)."
+            },
+            "organizationId": {
+              "type": "string",
+              "description": "Acota a las personas que pertenecen a esta organización.",
+              "ref": { "resource": "contacts" }
             },
             "limit": {
               "type": "integer",
@@ -211,6 +256,12 @@
               "format": "text"
             },
             { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "kind",
+              "name": "kind",
+              "label": "Persona u organización",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -248,7 +299,7 @@
         "id": "contacts.create",
         "action": "contacts.create",
         "title": "Dar de alta un contacto",
-        "description": "Registra a una persona en la agenda. Antes conviene buscarla: la misma persona cargada dos veces termina con el contrato a nombre de una y los pagos a nombre de la otra. El alta no valida duplicados.",
+        "description": "Registra a una persona u organización en la agenda. Antes conviene buscarla: el mismo contacto cargado dos veces termina con su historia repartida entre los dos. El alta no valida duplicados.",
         "effect": "write",
         "confirmation": "always",
         "inputSchema": {
@@ -256,32 +307,96 @@
           "properties": {
             "data": {
               "type": "object",
-              "description": "Los datos de la persona.",
+              "description": "Los datos del contacto.",
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "Con qué rol se lo carga: «owner» para un propietario, «tenant» para un inquilino. Un mismo contacto puede cumplir otro rol en otra unidad — esto es con el que nace, no una etiqueta excluyente."
+                  "description": "El rol con el que lo usa el negocio, en el vocabulario de cada kit (por ejemplo «client», «supplier», «owner»). Un mismo contacto puede cumplir otro rol en otro lado — esto es con el que nace, no una etiqueta excluyente."
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["person", "organization"],
+                  "description": "«person» para una persona, «organization» para una empresa u organización. Si se omite, es una persona."
                 },
                 "name": {
                   "type": "string",
-                  "description": "Nombre y apellido, o la razón social si es una empresa."
+                  "description": "El nombre visible: nombre y apellido de una persona, o la razón social de una organización."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "Nombre de pila, si se lo quiere guardar aparte. No reemplaza a «name»."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Apellido, si se lo quiere guardar aparte. No reemplaza a «name»."
+                },
+                "job_title": {
+                  "type": "string",
+                  "description": "Cargo o puesto de la persona dentro de su organización."
+                },
+                "organization_id": {
+                  "type": "string",
+                  "description": "La organización a la que pertenece esta persona: otro contacto cargado como organización.",
+                  "ref": { "resource": "contacts" }
                 },
                 "phone": {
                   "type": "string",
-                  "description": "Teléfono de contacto."
+                  "description": "Teléfono principal."
                 },
-                "email": { "type": "string", "description": "Email." },
+                "additional_phones": {
+                  "type": "array",
+                  "description": "Otros teléfonos, además del principal. Reemplaza la lista entera.",
+                  "items": { "type": "string", "description": "Un teléfono." }
+                },
+                "email": { "type": "string", "description": "Email principal." },
+                "additional_emails": {
+                  "type": "array",
+                  "description": "Otros emails, además del principal. Reemplaza la lista entera.",
+                  "items": { "type": "string", "description": "Un email." }
+                },
+                "website": {
+                  "type": "string",
+                  "description": "Sitio web, sobre todo de una organización."
+                },
+                "linkedin": {
+                  "type": "string",
+                  "description": "Perfil o página de LinkedIn."
+                },
                 "document_type": {
                   "type": "string",
                   "description": "Qué documento es: CUIT, CUIL o DNI."
                 },
                 "document_number": {
                   "type": "string",
-                  "description": "El número del documento. Sin él no se puede facturar ni liquidar."
+                  "description": "El número del documento. Hace falta para facturarle."
                 },
                 "address": {
                   "type": "string",
-                  "description": "Domicilio de la persona — no el del inmueble que alquila."
+                  "description": "Domicilio en una sola línea."
+                },
+                "address_street": {
+                  "type": "string",
+                  "description": "Calle y número del domicilio, si se lo carga por partes."
+                },
+                "address_city": {
+                  "type": "string",
+                  "description": "Ciudad o localidad del domicilio."
+                },
+                "address_state": {
+                  "type": "string",
+                  "description": "Provincia o estado del domicilio."
+                },
+                "address_postcode": {
+                  "type": "string",
+                  "description": "Código postal del domicilio."
+                },
+                "address_country": {
+                  "type": "string",
+                  "description": "País del domicilio."
+                },
+                "owner_staff_id": {
+                  "type": "string",
+                  "description": "La persona del equipo responsable de este contacto."
                 },
                 "notes": { "type": "string", "description": "Notas." }
               },
@@ -302,6 +417,12 @@
               "format": "text"
             },
             { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "kind",
+              "name": "kind",
+              "label": "Persona u organización",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -337,7 +458,7 @@
         "id": "contacts.update",
         "action": "contacts.update",
         "title": "Editar un contacto",
-        "description": "Cambia los datos de una persona ya cargada: teléfono, email, documento o domicilio. Cuidado con el rol: pisarlo no la desvincula de nada — sigue siendo la inquilina del contrato que tenga.",
+        "description": "Cambia los datos de un contacto ya cargado: teléfono, email, documento, domicilio, cargo u organización. Cuidado con el rol: pisarlo no lo desvincula de nada de lo que ya tenga asociado en otros módulos.",
         "effect": "write",
         "confirmation": "always",
         "inputSchema": {
@@ -354,28 +475,92 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "description": "Con qué rol se lo carga: «owner» para un propietario, «tenant» para un inquilino. Un mismo contacto puede cumplir otro rol en otra unidad — esto es con el que nace, no una etiqueta excluyente."
+                  "description": "El rol con el que lo usa el negocio, en el vocabulario de cada kit (por ejemplo «client», «supplier», «owner»). Un mismo contacto puede cumplir otro rol en otro lado — esto es con el que nace, no una etiqueta excluyente."
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["person", "organization"],
+                  "description": "«person» para una persona, «organization» para una empresa u organización. Si se omite, es una persona."
                 },
                 "name": {
                   "type": "string",
-                  "description": "Nombre y apellido, o la razón social si es una empresa."
+                  "description": "El nombre visible: nombre y apellido de una persona, o la razón social de una organización."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "Nombre de pila, si se lo quiere guardar aparte. No reemplaza a «name»."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Apellido, si se lo quiere guardar aparte. No reemplaza a «name»."
+                },
+                "job_title": {
+                  "type": "string",
+                  "description": "Cargo o puesto de la persona dentro de su organización."
+                },
+                "organization_id": {
+                  "type": "string",
+                  "description": "La organización a la que pertenece esta persona: otro contacto cargado como organización.",
+                  "ref": { "resource": "contacts" }
                 },
                 "phone": {
                   "type": "string",
-                  "description": "Teléfono de contacto."
+                  "description": "Teléfono principal."
                 },
-                "email": { "type": "string", "description": "Email." },
+                "additional_phones": {
+                  "type": "array",
+                  "description": "Otros teléfonos, además del principal. Reemplaza la lista entera.",
+                  "items": { "type": "string", "description": "Un teléfono." }
+                },
+                "email": { "type": "string", "description": "Email principal." },
+                "additional_emails": {
+                  "type": "array",
+                  "description": "Otros emails, además del principal. Reemplaza la lista entera.",
+                  "items": { "type": "string", "description": "Un email." }
+                },
+                "website": {
+                  "type": "string",
+                  "description": "Sitio web, sobre todo de una organización."
+                },
+                "linkedin": {
+                  "type": "string",
+                  "description": "Perfil o página de LinkedIn."
+                },
                 "document_type": {
                   "type": "string",
                   "description": "Qué documento es: CUIT, CUIL o DNI."
                 },
                 "document_number": {
                   "type": "string",
-                  "description": "El número del documento. Sin él no se puede facturar ni liquidar."
+                  "description": "El número del documento. Hace falta para facturarle."
                 },
                 "address": {
                   "type": "string",
-                  "description": "Domicilio de la persona — no el del inmueble que alquila."
+                  "description": "Domicilio en una sola línea."
+                },
+                "address_street": {
+                  "type": "string",
+                  "description": "Calle y número del domicilio, si se lo carga por partes."
+                },
+                "address_city": {
+                  "type": "string",
+                  "description": "Ciudad o localidad del domicilio."
+                },
+                "address_state": {
+                  "type": "string",
+                  "description": "Provincia o estado del domicilio."
+                },
+                "address_postcode": {
+                  "type": "string",
+                  "description": "Código postal del domicilio."
+                },
+                "address_country": {
+                  "type": "string",
+                  "description": "País del domicilio."
+                },
+                "owner_staff_id": {
+                  "type": "string",
+                  "description": "La persona del equipo responsable de este contacto."
                 },
                 "notes": { "type": "string", "description": "Notas." }
               },
@@ -395,6 +580,12 @@
               "format": "text"
             },
             { "key": "type", "name": "type", "label": "Rol", "format": "text" },
+            {
+              "key": "kind",
+              "name": "kind",
+              "label": "Persona u organización",
+              "format": "text"
+            },
             {
               "key": "document_number",
               "name": "documentNumber",
@@ -431,46 +622,51 @@
     "copilotCatalogContentFingerprint": "c59d73491303c86799b19f74d29bce27",
     "permissions": [
       {
+        "id": "contacts.read",
+        "label": "Ver contactos",
+        "description": "Consultar la agenda de contactos, buscarlos y ver los posibles duplicados.",
+        "effect": "read",
+        "grants": {
+          "actions": [
+            "contacts.count",
+            "contacts.countByType",
+            "contacts.findByDocument",
+            "contacts.findByEmail",
+            "contacts.findByTag",
+            "contacts.findDuplicates",
+            "contacts.getById",
+            "contacts.list",
+            "contacts.listByOrganization",
+            "contacts.listTags",
+            "contacts.search"
+          ]
+        }
+      },
+      {
         "id": "contacts.manage",
         "label": "Gestionar contactos",
+        "description": "Crear y editar contactos, cargarlos en lote, buscar duplicados y fusionarlos en uno.",
         "effect": "write",
         "grants": {
           "actions": [
             "contacts.bulkCreate",
             "contacts.create",
+            "contacts.merge",
             "contacts.restore",
+            "contacts.scanDuplicates",
             "contacts.softDelete",
             "contacts.update"
           ]
         },
-        "requires": ["contacts.read"],
-        "generatedBy": "builder"
-      },
-      {
-        "id": "contacts.read",
-        "label": "Ver contactos",
-        "effect": "read",
-        "grants": {
-          "actions": [
-            "contacts.countByType",
-            "contacts.findByDocument",
-            "contacts.findByEmail",
-            "contacts.findByTag",
-            "contacts.getById",
-            "contacts.list",
-            "contacts.listTags",
-            "contacts.search"
-          ]
-        },
-        "generatedBy": "builder"
+        "requires": ["contacts.read"]
       },
       {
         "id": "contacts.delete",
-        "label": "Eliminar contactos",
+        "label": "Eliminar contactos definitivamente",
+        "description": "Borrar un contacto para siempre, sin poder recuperarlo.",
         "effect": "destructive",
         "grants": { "actions": ["contacts.delete"] },
-        "requires": ["contacts.read"],
-        "generatedBy": "builder"
+        "requires": ["contacts.read"]
       }
     ]
   }
