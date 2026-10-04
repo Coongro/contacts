@@ -1,6 +1,6 @@
 {
   "name": "@coongro/contacts",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "description": "Módulo genérico y reutilizable de gestión de contactos para Coongro",
   "main": "dist/index.js",
@@ -48,6 +48,7 @@
     "quality": "npm run typecheck && npm run format:check && npm run lint && npm run test",
     "quality:fix": "npm run format && npm run lint:fix",
     "sync-version": "node scripts/sync-version.cjs",
+    "version-packages": "node ../../scripts/version-packages.mjs",
     "version": "npm run sync-version && git add coongro.manifest.json",
     "prepublishOnly": "npm run quality && npm run build",
     "prepare": "husky"
