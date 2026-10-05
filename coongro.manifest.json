@@ -1,7 +1,8 @@
 {
   "id": "contacts",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "apiVersion": "2.0",
+  "engines": { "coongro": ">=0.61.0 <1.0.0" },
   "assets": {
     "styles": [
       "./dist/assets/tailwind.css",
@@ -11,10 +12,10 @@
   "contributes": {
     "menus": [],
     "views": [],
-    "repositories": [
+    "actionModules": [
       {
-        "module": "./dist/repositories/contact.repository.js",
-        "export": "ContactRepository",
+        "module": "./dist/actions.js",
+        "export": "contactActions",
         "prefix": "contacts",
         "actions": [
           "list",

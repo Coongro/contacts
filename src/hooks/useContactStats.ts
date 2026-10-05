@@ -1,7 +1,9 @@
 /**
  * Hook para obtener estadísticas de contactos.
  */
-import { getHostReact, actions } from '@coongro/plugin-sdk';
+import { getHostReact } from '@coongro/plugin-sdk';
+
+import { contactsClient } from '../lib/contactsClient.js';
 
 const React = getHostReact();
 const { useState, useEffect, useCallback, useRef } = React;
@@ -33,8 +35,7 @@ export function useContactStats(): {
     setLoading(true);
     setError(null);
     try {
-      const byType =
-        await actions.execute<Array<{ type: string; count: number }>>('contacts.countByType');
+      const byType = await contactsClient.countByType();
 
       if (!mountedRef.current) return;
 
