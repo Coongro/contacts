@@ -104,9 +104,7 @@ export const contactActions = {
     .meta({ legacy: 'items' })
     .input(SearchInput)
     .handler(async ({ input, context }): Promise<Page<ContactRow>> => {
-      const repo = context.repo(ContactRepository);
-      const [items, total] = await Promise.all([repo.search(input), repo.countSearch(input)]);
-      return { items, total };
+      return context.repo(ContactRepository).searchPage(input);
     }),
 
   getById: query

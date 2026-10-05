@@ -1,5 +1,5 @@
 import type { ModuleDatabaseAPI } from '@coongro/plugin-sdk';
-import { eq, and, or, ilike, isNull, sql, asc, desc, type SQL } from 'drizzle-orm';
+import { eq, and, or, ilike, isNull, sql, asc, desc, getTableColumns, type SQL } from 'drizzle-orm';
 
 import { contactTable } from '../schema/contact.js';
 import type { ContactRow, NewContactRow } from '../schema/contact.js';
@@ -173,42 +173,44 @@ export class ContactRepository {
         includeDeleted,
       });
 
-      let q = tx.select().from(contactTable);
-
-      if (conditions.length > 0) {
-        q = q.where(and(...conditions)) as typeof q;
-      }
-
-      // Ordenamiento
-      const sortableColumns: Record<string, () => typeof q> = {
-        name: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.name)) as typeof q,
-        type: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.type)) as typeof q,
-        kind: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.kind)) as typeof q,
-        phone: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.phone)) as typeof q,
-        email: () => q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.email)) as typeof q,
-        is_active: () =>
-          q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.is_active)) as typeof q,
-        created_at: () =>
-          q.orderBy((orderDir === 'desc' ? desc : asc)(contactTable.created_at)) as typeof q,
-      };
-
-      const applySorting = orderByField ? sortableColumns[orderByField] : undefined;
-      if (applySorting) {
-        q = applySorting();
-      } else {
-        q = q.orderBy(desc(contactTable.created_at)) as typeof q;
-      }
-
-      if (limit) {
-        q = q.limit(limit) as typeof q;
-      }
-
-      if (offset) {
-        q = q.offset(offset) as typeof q;
-      }
-
+      let q = tx
+        .select()
+        .from(contactTable)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(searchOrder(orderByField, orderDir))
+        .$dynamic();
+      if (limit) q = q.limit(limit);
+      if (offset) q = q.offset(offset);
       return q;
     });
+  }
+
+  /**
+   * La página de `search` y cuántos cumplen los filtros, en UNA consulta:
+   * `count(*) OVER()` se calcula antes del LIMIT. Solo si la página vino vacía
+   * (un offset más allá del final) hace falta contar aparte.
+   */
+  async searchPage(params: SearchParams): Promise<{ items: ContactRow[]; total: number }> {
+    const conditions = searchConditions(params);
+    const rows = await this.db.ormQuery((tx) => {
+      let q = tx
+        .select({
+          ...getTableColumns(contactTable),
+          total: sql<number>`count(*) over()`.mapWith(Number),
+        })
+        .from(contactTable)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(searchOrder(params.orderBy, params.orderDir ?? 'asc'))
+        .$dynamic();
+      if (params.limit) q = q.limit(params.limit);
+      if (params.offset) q = q.offset(params.offset);
+      return q;
+    });
+    if (rows.length === 0) {
+      return { items: [], total: params.offset ? await this.countSearch(params) : 0 };
+    }
+    const total = rows[0]?.total ?? 0;
+    return { items: rows.map(({ total: _total, ...row }) => row), total };
   }
 
   /** Cuántos contactos cumplen los filtros de `search` (sin paginar). */
@@ -510,4 +512,21 @@ function searchConditions({
   }
 
   return conditions;
+}
+
+/** Columnas por las que se ordena `search`; sin una conocida, lo más nuevo primero. */
+const SORTABLE = {
+  name: contactTable.name,
+  type: contactTable.type,
+  kind: contactTable.kind,
+  phone: contactTable.phone,
+  email: contactTable.email,
+  is_active: contactTable.is_active,
+  created_at: contactTable.created_at,
+} as const;
+
+function searchOrder(orderBy: string | undefined, orderDir: 'asc' | 'desc'): SQL {
+  const column = orderBy ? SORTABLE[orderBy as keyof typeof SORTABLE] : undefined;
+  if (!column) return desc(contactTable.created_at);
+  return orderDir === 'desc' ? desc(column) : asc(column);
 }
