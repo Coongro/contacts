@@ -122,13 +122,14 @@ export function ContactCard(props: ContactCardProps) {
       ),
 
     // Extra info del bloque
-    extraInfo &&
-      React.createElement(
-        React.Fragment,
-        null,
-        React.createElement(UI.Separator, { className: 'mt-3' }),
-        React.createElement('div', { className: 'mt-3' }, extraInfo as React.ReactNode)
-      ),
+    extraInfo
+      ? React.createElement(
+          React.Fragment,
+          null,
+          React.createElement(UI.Separator, { className: 'mt-3' }),
+          React.createElement('div', { className: 'mt-3' }, extraInfo as React.ReactNode)
+        )
+      : null,
 
     // Acciones
     cardActions.length > 0 &&

@@ -163,53 +163,19 @@ export class ContactRepository {
     orderDir = 'asc',
   }: SearchParams): Promise<ContactRow[]> {
     return this.db.ormQuery((tx) => {
-      const conditions = [];
-
-      if (!includeDeleted) {
-        conditions.push(isNull(contactTable.deleted_at));
-      }
-
-      if (query) {
-        const pattern = `%${query}%`;
-        conditions.push(
-          or(
-            ilike(contactTable.name, pattern),
-            ilike(contactTable.email, pattern),
-            ilike(contactTable.phone, pattern),
-            ilike(contactTable.document_number, pattern)
-          )
-        );
-      }
-
-      if (type) {
-        conditions.push(eq(contactTable.type, type));
-      }
-
-      if (kind) {
-        conditions.push(eq(contactTable.kind, kind));
-      }
-
-      if (organizationId) {
-        conditions.push(eq(contactTable.organization_id, organizationId));
-      }
-
-      if (isActive !== undefined) {
-        conditions.push(eq(contactTable.is_active, isActive));
-      }
-
-      if (tags && tags.length > 0) {
-        conditions.push(
-          sql`${contactTable.tags} ?| array[${sql.join(
-            tags.map((t) => sql`${t}`),
-            sql`, `
-          )}]`
-        );
-      }
+      const conditions = searchConditions({
+        query,
+        type,
+        kind,
+        organizationId,
+        tags,
+        isActive,
+        includeDeleted,
+      });
 
       let q = tx.select().from(contactTable);
 
       if (conditions.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         q = q.where(and(...conditions)) as typeof q;
       }
 
@@ -243,6 +209,18 @@ export class ContactRepository {
 
       return q;
     });
+  }
+
+  /** Cuántos contactos cumplen los filtros de `search` (sin paginar). */
+  async countSearch(params: SearchParams): Promise<number> {
+    const conditions = searchConditions(params);
+    const rows = await this.db.ormQuery((tx) =>
+      tx
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(contactTable)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+    );
+    return rows[0]?.count ?? 0;
   }
 
   async findByDocument({
@@ -477,4 +455,59 @@ export class ContactRepository {
       return merged ?? survivor;
     });
   }
+}
+
+/** Los filtros de `search`, compartidos con `countSearch`. */
+function searchConditions({
+  query,
+  type,
+  kind,
+  organizationId,
+  tags,
+  isActive,
+  includeDeleted,
+}: SearchParams): SQL[] {
+  const conditions: SQL[] = [];
+
+  if (!includeDeleted) {
+    conditions.push(isNull(contactTable.deleted_at));
+  }
+
+  if (query) {
+    const pattern = `%${query}%`;
+    const matches = or(
+      ilike(contactTable.name, pattern),
+      ilike(contactTable.email, pattern),
+      ilike(contactTable.phone, pattern),
+      ilike(contactTable.document_number, pattern)
+    );
+    if (matches) conditions.push(matches);
+  }
+
+  if (type) {
+    conditions.push(eq(contactTable.type, type));
+  }
+
+  if (kind) {
+    conditions.push(eq(contactTable.kind, kind));
+  }
+
+  if (organizationId) {
+    conditions.push(eq(contactTable.organization_id, organizationId));
+  }
+
+  if (isActive !== undefined) {
+    conditions.push(eq(contactTable.is_active, isActive));
+  }
+
+  if (tags && tags.length > 0) {
+    conditions.push(
+      sql`${contactTable.tags} ?| array[${sql.join(
+        tags.map((t) => sql`${t}`),
+        sql`, `
+      )}]`
+    );
+  }
+
+  return conditions;
 }

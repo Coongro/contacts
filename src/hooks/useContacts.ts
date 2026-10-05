@@ -1,8 +1,9 @@
 /**
  * Hook para listar contactos con búsqueda, filtros y paginación.
  */
-import { getHostReact, actions } from '@coongro/plugin-sdk';
+import { getHostReact } from '@coongro/plugin-sdk';
 
+import { contactsClient } from '../lib/contactsClient.js';
 import type { Contact } from '../types/contact.js';
 import type { ContactFilters, SortDirection } from '../types/filters.js';
 
@@ -57,20 +58,14 @@ export function useContacts(options: UseContactsOptions = {}): UseContactsResult
     setLoading(true);
     setError(null);
     try {
-      const result = await actions.execute<Contact[]>('contacts.search', {
+      const result = await contactsClient.search({
         ...filters,
         limit: pageSize,
         offset: (page - 1) * pageSize,
       });
       if (!mountedRef.current) return;
-      setData(result);
-      // Estimar total: si devuelve menos del pageSize, estamos en la última página
-      if (result.length < pageSize) {
-        setTotal((page - 1) * pageSize + result.length);
-      } else {
-        // Mínimo: lo que sabemos hasta ahora
-        setTotal(Math.max(total, page * pageSize + 1));
-      }
+      setData(result.items as Contact[]);
+      setTotal(result.total);
     } catch (err) {
       if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : 'Error al cargar contactos');
