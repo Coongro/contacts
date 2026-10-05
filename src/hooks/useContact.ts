@@ -1,8 +1,9 @@
 /**
  * Hook para obtener un contacto individual por ID.
  */
-import { getHostReact, actions } from '@coongro/plugin-sdk';
+import { getHostReact } from '@coongro/plugin-sdk';
 
+import { contactsClient } from '../lib/contactsClient.js';
 import type { Contact } from '../types/contact.js';
 
 const React = getHostReact();
@@ -37,9 +38,9 @@ export function useContact(id: string | null | undefined): UseContactResult {
     setLoading(true);
     setError(null);
     try {
-      const result = await actions.execute<Contact | undefined>('contacts.getById', { id });
+      const result = await contactsClient.getById({ id });
       if (!mountedRef.current) return;
-      setContact(result ?? null);
+      setContact(result as Contact | null);
     } catch (err) {
       if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : 'Error al cargar contacto');

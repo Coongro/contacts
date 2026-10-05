@@ -1,8 +1,9 @@
 /**
  * Hook para operaciones de mutación de contactos (crear, editar, eliminar).
  */
-import { getHostReact, actions, usePlugin } from '@coongro/plugin-sdk';
+import { getHostReact, usePlugin } from '@coongro/plugin-sdk';
 
+import { contactsClient } from '../lib/contactsClient.js';
 import type { Contact, ContactCreateData, ContactUpdateData } from '../types/contact.js';
 
 const React = getHostReact();
@@ -29,9 +30,9 @@ export function useContactMutations(): UseContactMutationsResult {
     async (data: ContactCreateData): Promise<Contact | null> => {
       setCreating(true);
       try {
-        const result = await actions.execute<Contact[]>('contacts.create', { data });
+        const created = await contactsClient.create({ data });
         toast.success('Contacto creado', data.name);
-        return result[0] ?? null;
+        return created as Contact | null;
       } catch (err) {
         toast.error('Error', err instanceof Error ? err.message : 'No se pudo crear el contacto');
         return null;
@@ -46,9 +47,9 @@ export function useContactMutations(): UseContactMutationsResult {
     async (id: string, data: ContactUpdateData): Promise<Contact | null> => {
       setUpdating(true);
       try {
-        const result = await actions.execute<Contact[]>('contacts.update', { id, data });
+        const updated = await contactsClient.update({ id, data });
         toast.success('Contacto actualizado', '');
-        return result[0] ?? null;
+        return updated as Contact | null;
       } catch (err) {
         toast.error('Error', err instanceof Error ? err.message : 'No se pudo actualizar');
         return null;
@@ -63,7 +64,7 @@ export function useContactMutations(): UseContactMutationsResult {
     async (id: string): Promise<boolean> => {
       setDeleting(true);
       try {
-        await actions.execute('contacts.delete', { id });
+        await contactsClient.delete({ id });
         toast.success('Contacto eliminado', '');
         return true;
       } catch (err) {
@@ -80,7 +81,7 @@ export function useContactMutations(): UseContactMutationsResult {
     async (id: string): Promise<boolean> => {
       setDeleting(true);
       try {
-        await actions.execute('contacts.softDelete', { id });
+        await contactsClient.softDelete({ id });
         toast.success('Contacto archivado', '');
         return true;
       } catch (err) {
@@ -96,7 +97,7 @@ export function useContactMutations(): UseContactMutationsResult {
   const restore = useCallback(
     async (id: string): Promise<boolean> => {
       try {
-        await actions.execute('contacts.restore', { id });
+        await contactsClient.restore({ id });
         toast.success('Contacto restaurado', '');
         return true;
       } catch (err) {

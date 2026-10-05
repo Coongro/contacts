@@ -4,6 +4,7 @@
  * Usa DataTable de ui-components con mobileRender para cards en móvil.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import type { ReactNode } from 'react';
 
 import { useContacts } from '../hooks/useContacts.js';
 import { formatType } from '../lib/formatType.js';
@@ -67,6 +68,8 @@ export function ContactsTable(props: ContactsTableProps) {
     const base = columns ?? DEFAULT_COLUMNS;
     return [...base, ...extraColumns].map((col) => ({
       ...col,
+      // `ColumnDef.render` es público y devuelve `unknown`; DataTable pide un nodo.
+      render: col.render as ((item: Contact) => ReactNode) | undefined,
       sortable: SORTABLE_KEYS.has(col.key),
     }));
   }, [columns, extraColumns]);
