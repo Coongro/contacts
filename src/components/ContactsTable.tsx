@@ -4,7 +4,7 @@
  * Usa DataTable de ui-components con mobileRender para cards en móvil.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import { useContacts } from '../hooks/useContacts.js';
 import { formatType } from '../lib/formatType.js';
@@ -38,7 +38,7 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   },
 ];
 
-export function ContactsTable(props: ContactsTableProps) {
+export function ContactsTable(props: ContactsTableProps): ReactElement {
   const {
     filters: initialFilters,
     columns,
@@ -168,7 +168,7 @@ export function ContactsTable(props: ContactsTableProps) {
     rowKey: (contact: Contact) => contact.id,
     loading,
     error: error ?? undefined,
-    onRetry: refetch,
+    onRetry: () => void refetch(),
     columns: dtColumns,
     searchPlaceholder: 'Buscar contactos...',
     searchValue,
