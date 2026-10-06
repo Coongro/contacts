@@ -1,12 +1,9 @@
 /**
  * Hook para obtener estadísticas de contactos.
  */
-import { getHostReact } from '@coongro/plugin-sdk';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { contactsClient } from '../lib/contactsClient.js';
-
-const React = getHostReact();
-const { useState, useEffect, useCallback, useRef } = React;
 
 export interface ContactStatsData {
   total: number;

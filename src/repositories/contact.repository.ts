@@ -54,10 +54,11 @@ export interface CountParams {
   includeDeleted?: boolean;
 }
 
-export interface CountByTypeResult {
+/** Fila de `execute<Row>()`: un `type` (no `interface`) para que cumpla `Record<string, unknown>`. */
+export type CountByTypeResult = {
   type: string;
   count: number;
-}
+};
 
 export class ContactRepository {
   constructor(
@@ -275,14 +276,14 @@ export class ContactRepository {
 
   async listTags(): Promise<string[]> {
     const rows = await this.db.ormQuery((tx) =>
-      tx.execute(sql`
+      tx.execute<{ tag: string }>(sql`
         SELECT DISTINCT jsonb_array_elements_text(tags) AS tag
         FROM ${contactTable}
         WHERE deleted_at IS NULL AND tags IS NOT NULL
         ORDER BY tag
       `)
     );
-    return (rows as unknown as Array<{ tag: string }>).map((r) => r.tag);
+    return rows.map((r) => r.tag);
   }
 
   async findByTag({ tag }: { tag: string }): Promise<ContactRow[]> {
@@ -322,8 +323,8 @@ export class ContactRepository {
   }
 
   async countByType(): Promise<CountByTypeResult[]> {
-    const rows = await this.db.ormQuery((tx) =>
-      tx.execute(sql`
+    return this.db.ormQuery((tx) =>
+      tx.execute<CountByTypeResult>(sql`
         SELECT type, COUNT(*)::int AS count
         FROM ${contactTable}
         WHERE deleted_at IS NULL
@@ -331,7 +332,6 @@ export class ContactRepository {
         ORDER BY count DESC
       `)
     );
-    return rows as unknown as CountByTypeResult[];
   }
 
   // ---------------------------------------------------------------------------
@@ -353,10 +353,9 @@ export class ContactRepository {
     minScore?: number;
     limit?: number;
   }): Promise<DuplicateCandidate[]> {
-    const rows = await this.db.ormQuery((tx) =>
-      tx.execute(findDuplicatesSql(contactTable, id, minScore, limit))
+    return this.db.ormQuery((tx) =>
+      tx.execute<DuplicateCandidate>(findDuplicatesSql(contactTable, id, minScore, limit))
     );
-    return rows as unknown as DuplicateCandidate[];
   }
 
   /**
@@ -374,10 +373,11 @@ export class ContactRepository {
     limit?: number;
     offset?: number;
   } = {}): Promise<DuplicatePair[]> {
-    const rows = await this.db.ormQuery((tx) =>
-      tx.execute(scanDuplicatesSql(contactTable, kind, minScore, Math.min(limit, 200), offset))
+    return this.db.ormQuery((tx) =>
+      tx.execute<DuplicatePair>(
+        scanDuplicatesSql(contactTable, kind, minScore, Math.min(limit, 200), offset)
+      )
     );
-    return rows as unknown as DuplicatePair[];
   }
 
   /**
