@@ -2,7 +2,7 @@
   "id": "contacts",
   "version": "1.6.1",
   "apiVersion": "2.0",
-  "engines": { "coongro": ">=0.68.0 <1.0.0" },
+  "engines": { "coongro": ">=0.69.0 <1.0.0" },
   "assets": {
     "styles": [
       "./dist/assets/tailwind.css",

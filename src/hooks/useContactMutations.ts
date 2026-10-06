@@ -1,13 +1,11 @@
 /**
  * Hook para operaciones de mutación de contactos (crear, editar, eliminar).
  */
-import { getHostReact, usePlugin } from '@coongro/plugin-sdk';
+import { usePlugin } from '@coongro/plugin-sdk';
+import { useCallback, useState } from 'react';
 
 import { contactsClient } from '../lib/contactsClient.js';
 import type { Contact, ContactCreateData, ContactUpdateData } from '../types/contact.js';
-
-const React = getHostReact();
-const { useState, useCallback } = React;
 
 export interface UseContactMutationsResult {
   creating: boolean;
