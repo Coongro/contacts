@@ -3,6 +3,7 @@
  * Extensible via extraFields para agregar campos específicos del bloque.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import type { ReactElement } from 'react';
 
 import { useContact } from '../hooks/useContact.js';
 import { useContactMutations } from '../hooks/useContactMutations.js';
@@ -65,7 +66,7 @@ function getSubmitLabel(isSaving: boolean, isEdit: boolean): string {
   return 'Crear contacto';
 }
 
-export function ContactForm(props: ContactFormProps) {
+export function ContactForm(props: ContactFormProps): ReactElement {
   const {
     contactId,
     defaults = {},

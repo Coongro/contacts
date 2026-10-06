@@ -5,6 +5,7 @@
  * desde @coongro/patients). Reutiliza ui-components + tokens cg-* (dark mode auto).
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import type { ReactElement } from 'react';
 
 import { useContact } from '../hooks/useContact.js';
 import { formatType } from '../lib/formatType.js';
@@ -25,7 +26,7 @@ function eyebrow(text: string, className = 'text-cg-text-muted') {
   );
 }
 
-export function ContactDetail(props: ContactDetailProps) {
+export function ContactDetail(props: ContactDetailProps): ReactElement {
   const {
     contactId,
     extraSections = [],
@@ -62,7 +63,7 @@ export function ContactDetail(props: ContactDetailProps) {
     return React.createElement(UI.ErrorDisplay, {
       title: 'Contacto no encontrado',
       message: error ?? undefined,
-      onRetry: refetch,
+      onRetry: () => void refetch(),
     });
   }
 

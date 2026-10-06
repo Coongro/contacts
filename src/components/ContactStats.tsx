@@ -3,6 +3,7 @@
  * Usa StatCard + DynamicIcon de la librería UI compartida.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import type { ReactElement } from 'react';
 
 import { useContactStats } from '../hooks/useContactStats.js';
 import type { ContactStatsProps, StatDef } from '../types/components.js';
@@ -18,7 +19,7 @@ const ICON_MAP: Record<string, string> = {
   active: 'CheckCircle',
 };
 
-export function ContactStats(props: ContactStatsProps) {
+export function ContactStats(props: ContactStatsProps): ReactElement {
   const { layout = 'row', extraStats = [], className = '' } = props;
 
   const { stats, loading, error } = useContactStats();
