@@ -1,14 +1,11 @@
 /**
  * Hook para listar contactos con búsqueda, filtros y paginación.
  */
-import { getHostReact } from '@coongro/plugin-sdk';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { contactsClient } from '../lib/contactsClient.js';
 import type { Contact } from '../types/contact.js';
 import type { ContactFilters, SortDirection } from '../types/filters.js';
-
-const React = getHostReact();
-const { useState, useEffect, useCallback, useRef } = React;
 
 export interface UseContactsOptions extends ContactFilters {
   pageSize?: number;
