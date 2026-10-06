@@ -1,6 +1,6 @@
 {
   "id": "contacts",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "apiVersion": "2.0",
   "engines": { "coongro": ">=0.69.0 <1.0.0" },
   "assets": {
