@@ -1,4 +1,5 @@
 import type { ModuleDatabaseAPI } from '@coongro/plugin-sdk';
+import type { PluginContext } from '@coongro/plugin-sdk/server';
 import { eq, and, or, ilike, isNull, sql, asc, desc, getTableColumns, type SQL } from 'drizzle-orm';
 
 import { contactTable } from '../schema/contact.js';
@@ -12,19 +13,8 @@ import {
 } from '../services/duplicates.js';
 import { assertMergeable, buildMergePatch, type FieldChoices } from '../services/merge.js';
 
-/**
- * Lo que este repositorio usa del segundo argumento del constructor
- * (`RepositoryContext` del Core). Estructural para no atar el plugin a una versión
- * del SDK: sin `events`, la fusión igual se hace, pero nadie se entera.
- */
-export interface ContactRepositoryContext {
-  events?: {
-    publish(
-      tx: unknown,
-      event: { type: string; entityId?: string | null; payload?: Record<string, unknown> }
-    ): Promise<void>;
-  };
-}
+/** Lo que este repositorio usa del contexto del plugin (`PluginContext`). */
+export type ContactRepositoryContext = Pick<PluginContext, 'events'>;
 
 export interface MergeParams {
   winnerId: string;
@@ -69,7 +59,7 @@ export interface CountByTypeResult {
 export class ContactRepository {
   constructor(
     private readonly db: ModuleDatabaseAPI,
-    private readonly context?: ContactRepositoryContext
+    private readonly context: ContactRepositoryContext
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -442,7 +432,7 @@ export class ContactRepository {
           )})`
         );
 
-      await this.context?.events?.publish(tx, {
+      await this.context.events.publish(tx, {
         type: CONTACT_MERGED_EVENT,
         entityId: winnerId,
         payload: {
