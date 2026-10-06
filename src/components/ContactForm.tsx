@@ -2,7 +2,18 @@
  * Formulario de crear/editar contacto.
  * Extensible via extraFields para agregar campos específicos del bloque.
  */
-import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import {
+  Button,
+  FormSection,
+  Input,
+  Label,
+  LoadingOverlay,
+  Select,
+  SelectItem,
+  Switch,
+  Textarea,
+} from '@coongro/ui-components';
+import { useCallback, useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 
 import { useContact } from '../hooks/useContact.js';
@@ -10,10 +21,6 @@ import { useContactMutations } from '../hooks/useContactMutations.js';
 import { kindFromType } from '../lib/kindFromType.js';
 import type { ContactFormProps, FieldDef } from '../types/components.js';
 import type { Contact, ContactCreateData } from '../types/contact.js';
-
-const React = getHostReact();
-const UI = getHostUI();
-const { useState, useEffect, useCallback } = React;
 
 const CONTACT_TYPES = [
   { label: 'Persona', value: 'person' },
@@ -159,135 +166,123 @@ export function ContactForm(props: ContactFormProps): ReactElement {
   const allFields = [...BASE_FIELDS, ...extraFields].filter((f) => !hiddenSet.has(f.key));
 
   if (isEdit && loadingContact) {
-    return React.createElement(UI.LoadingOverlay, {
-      variant: 'skeleton',
-      rows: 6,
-    });
+    return <LoadingOverlay variant="skeleton" rows={6} />;
   }
 
   // Campos extra de bloques que no pertenecen a ninguna sección base
   const unsectionedFields = allFields.filter((f) => !BASE_SECTIONED_KEYS.has(f.key));
 
-  function renderFieldEl(field: FieldDef) {
-    return React.createElement(
-      'div',
-      { key: field.key, className: 'flex flex-col gap-1.5' },
-      React.createElement(
-        UI.Label,
-        null,
-        field.label,
-        field.required && React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
-      ),
-      renderField(field, formData[field.key], (v) => handleChange(field.key, v))
+  function renderFieldEl(field: FieldDef): ReactElement {
+    return (
+      <div key={field.key} className="flex flex-col gap-1.5">
+        <Label>
+          {field.label}
+          {field.required && <span className="text-cg-danger ml-0.5">*</span>}
+        </Label>
+        {renderField(field, formData[field.key], (v) => handleChange(field.key, v))}
+      </div>
     );
   }
 
-  return React.createElement(
-    'form',
-    { ref: formRef, onSubmit: handleSubmit, className: `flex flex-col gap-4 ${className}` },
+  return (
+    <form
+      ref={formRef}
+      onSubmit={(e) => void handleSubmit(e)}
+      className={`flex flex-col gap-4 ${className}`}
+    >
+      {/* Campos agrupados por sección */}
+      {FIELD_SECTIONS.map((section) => {
+        const sectionFields = section.keys
+          .map((k) => allFields.find((f) => f.key === k))
+          .filter((f): f is FieldDef => Boolean(f));
+        if (sectionFields.length === 0) return null;
+        return (
+          <FormSection key={section.title} icon={section.icon} title={section.title}>
+            {sectionFields.map(renderFieldEl)}
+          </FormSection>
+        );
+      }).filter(Boolean)}
 
-    // Campos agrupados por sección
-    ...FIELD_SECTIONS.map((section) => {
-      const sectionFields = section.keys
-        .map((k) => allFields.find((f) => f.key === k))
-        .filter((f): f is FieldDef => Boolean(f));
-      if (sectionFields.length === 0) return null;
-      return React.createElement(
-        UI.FormSection,
-        { key: section.title, icon: section.icon, title: section.title },
-        ...sectionFields.map(renderFieldEl)
-      );
-    }).filter(Boolean),
+      {/* Campos extra de bloques (sin sección) */}
+      {unsectionedFields.length > 0 && (
+        <FormSection key="extra" icon="Settings" title="Datos adicionales">
+          {unsectionedFields.map(renderFieldEl)}
+        </FormSection>
+      )}
 
-    // Campos extra de bloques (sin sección)
-    unsectionedFields.length > 0 &&
-      React.createElement(
-        UI.FormSection,
-        { key: 'extra', icon: 'Settings', title: 'Datos adicionales' },
-        ...unsectionedFields.map(renderFieldEl)
-      ),
+      {/* Toggle activo */}
+      <FormSection key="status" icon="CircleCheck" title="Estado">
+        <div className="flex items-center justify-between">
+          <Label>Activo</Label>
+          <Switch
+            checked={!!formData.is_active}
+            onCheckedChange={(v: boolean) => handleChange('is_active', v)}
+          />
+        </div>
+      </FormSection>
 
-    // Toggle activo
-    React.createElement(
-      UI.FormSection,
-      { key: 'status', icon: 'CircleCheck', title: 'Estado' },
-      React.createElement(
-        'div',
-        { className: 'flex items-center justify-between' },
-        React.createElement(UI.Label, null, 'Activo'),
-        React.createElement(UI.Switch, {
-          checked: !!formData.is_active,
-          onCheckedChange: (v: boolean) => handleChange('is_active', v),
-        })
-      )
-    ),
-
-    // Acciones (solo si el caller no las pone en el footer del dialog)
-    !hideActions &&
-      React.createElement(
-        'div',
-        { className: 'flex gap-3 pt-2' },
-        React.createElement(
-          UI.Button,
-          {
-            type: 'submit',
-            disabled: isSaving || !formData.name,
-            className: 'flex-1',
-          },
-          getSubmitLabel(isSaving, isEdit)
-        ),
-        onCancel &&
-          React.createElement(
-            UI.Button,
-            {
-              type: 'button',
-              variant: 'outline',
-              onClick: onCancel,
-            },
-            'Cancelar'
-          )
-      )
+      {/* Acciones (solo si el caller no las pone en el footer del dialog) */}
+      {!hideActions && (
+        <div className="flex gap-3 pt-2">
+          <Button type="submit" disabled={isSaving || !formData.name} className="flex-1">
+            {getSubmitLabel(isSaving, isEdit)}
+          </Button>
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
+            </Button>
+          )}
+        </div>
+      )}
+    </form>
   );
 }
 
-function renderField(field: FieldDef, value: unknown, onChange: (v: unknown) => void) {
+function renderField(
+  field: FieldDef,
+  value: unknown,
+  onChange: (v: unknown) => void
+): ReactElement {
   switch (field.type) {
     case 'select':
-      return React.createElement(
-        UI.Select,
-        {
-          value: (value as string) ?? '',
-          onValueChange: (v: string) => onChange(v),
-          placeholder: `Seleccionar ${field.label.toLowerCase()}...`,
-          clearable: !field.required,
-          debounceMs: 0,
-        },
-        (field.options ?? []).map((opt) =>
-          React.createElement(UI.SelectItem, { key: opt.value, value: opt.value }, opt.label)
-        )
+      return (
+        <Select
+          value={(value as string) ?? ''}
+          onValueChange={(v: string) => onChange(v)}
+          placeholder={`Seleccionar ${field.label.toLowerCase()}...`}
+          clearable={!field.required}
+          debounceMs={0}
+        >
+          {(field.options ?? []).map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </Select>
       );
 
     case 'textarea':
-      return React.createElement(UI.Textarea, {
-        value: (value as string) ?? '',
-        onChange: (e: { target: { value: string } }) => onChange(e.target.value),
-        placeholder: field.placeholder,
-        rows: 3,
-      });
+      return (
+        <Textarea
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          rows={3}
+        />
+      );
 
     case 'toggle':
-      return React.createElement(UI.Switch, {
-        checked: !!value,
-        onCheckedChange: (v: boolean) => onChange(v),
-      });
+      return <Switch checked={!!value} onCheckedChange={(v: boolean) => onChange(v)} />;
 
     default:
-      return React.createElement(UI.Input, {
-        type: field.type === 'phone' ? 'tel' : field.type,
-        value: (value as string) ?? '',
-        onChange: (e: { target: { value: string } }) => onChange(e.target.value),
-        placeholder: field.placeholder,
-        required: field.required,
-      });
+      return (
+        <Input
+          type={field.type === 'phone' ? 'tel' : field.type}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          required={field.required}
+        />
+      );
   }
 }

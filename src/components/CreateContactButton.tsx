@@ -1,18 +1,16 @@
 /**
  * Botón para crear contacto. Abre un FormDialogSubmit con ContactForm.
  */
-import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import { Button, DynamicIcon, FormDialogSubmit } from '@coongro/ui-components';
+import { useCallback, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import type { CreateContactButtonProps } from '../types/components.js';
 import type { Contact } from '../types/contact.js';
 
 import { ContactForm } from './ContactForm.js';
 
-const React = getHostReact();
-const UI = getHostUI();
-const { useState, useCallback } = React;
-
-export function CreateContactButton(props: CreateContactButtonProps) {
+export function CreateContactButton(props: CreateContactButtonProps): ReactElement {
   const {
     defaults = {},
     label = 'Nuevo contacto',
@@ -36,41 +34,40 @@ export function CreateContactButton(props: CreateContactButtonProps) {
 
   const isPrimary = variant === 'primary';
 
-  return React.createElement(
-    React.Fragment,
-    null,
+  return (
+    <>
+      {/* Botón */}
+      <Button
+        type="button"
+        variant={isPrimary ? 'brand' : 'outline'}
+        onClick={() => setOpen(true)}
+        className={`gap-2 ${className}`}
+      >
+        <DynamicIcon icon="Plus" size={20} />
+        {label}
+      </Button>
 
-    // Botón
-    React.createElement(
-      UI.Button,
-      {
-        type: 'button',
-        variant: isPrimary ? 'brand' : 'outline',
-        onClick: () => setOpen(true),
-        className: `gap-2 ${className}`,
-      },
-      React.createElement(UI.DynamicIcon, { icon: 'Plus', size: 20 }),
-      label
-    ),
-
-    // Modal con footer sticky vía FormDialogSubmit
-    React.createElement(UI.FormDialogSubmit, {
-      open,
-      onOpenChange: setOpen,
-      title: label,
-      size: 'md',
-      submitLabel,
-      onCancel: () => setOpen(false),
-      disabled: saving,
-      children: ({ formRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
-        React.createElement(ContactForm, {
-          defaults,
-          extraFields,
-          onSuccess: handleSuccess,
-          formRef,
-          hideActions: true,
-          onSavingChange: setSaving,
-        }),
-    })
+      {/* Modal con footer sticky vía FormDialogSubmit */}
+      <FormDialogSubmit
+        open={open}
+        onOpenChange={setOpen}
+        title={label}
+        size="md"
+        submitLabel={submitLabel}
+        onCancel={() => setOpen(false)}
+        disabled={saving}
+      >
+        {({ formRef }) => (
+          <ContactForm
+            defaults={defaults}
+            extraFields={extraFields}
+            onSuccess={handleSuccess}
+            formRef={formRef}
+            hideActions
+            onSavingChange={setSaving}
+          />
+        )}
+      </FormDialogSubmit>
+    </>
   );
 }

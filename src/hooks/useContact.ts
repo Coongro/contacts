@@ -1,13 +1,10 @@
 /**
  * Hook para obtener un contacto individual por ID.
  */
-import { getHostReact } from '@coongro/plugin-sdk';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { contactsClient } from '../lib/contactsClient.js';
 import type { Contact } from '../types/contact.js';
-
-const React = getHostReact();
-const { useState, useEffect, useCallback, useRef } = React;
 
 export interface UseContactResult {
   contact: Contact | null;

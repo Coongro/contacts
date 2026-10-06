@@ -3,17 +3,14 @@
  * Extensible via extraColumns, extraActions, extraFilters.
  * Usa DataTable de ui-components con mobileRender para cards en móvil.
  */
-import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import { Badge, DataTable } from '@coongro/ui-components';
+import { useCallback, useMemo, useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 
 import { useContacts } from '../hooks/useContacts.js';
 import { formatType } from '../lib/formatType.js';
 import type { ContactsTableProps, ColumnDef } from '../types/components.js';
 import type { Contact } from '../types/contact.js';
-
-const React = getHostReact();
-const UI = getHostUI();
-const { useState, useCallback, useMemo } = React;
 
 // Columnas que soportan ordenamiento (deben coincidir con sortableColumns del repo)
 const SORTABLE_KEYS = new Set(['name', 'type', 'phone', 'email', 'is_active', 'created_at']);
@@ -26,15 +23,11 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   {
     key: 'is_active',
     header: 'Estado',
-    render: (c) =>
-      React.createElement(
-        UI.Badge,
-        {
-          variant: c.is_active ? 'success-soft' : 'secondary',
-          size: 'sm',
-        },
-        c.is_active ? 'Activo' : 'Inactivo'
-      ),
+    render: (c) => (
+      <Badge variant={c.is_active ? 'success-soft' : 'secondary'} size="sm">
+        {c.is_active ? 'Activo' : 'Inactivo'}
+      </Badge>
+    ),
   },
 ];
 
@@ -127,83 +120,74 @@ export function ContactsTable(props: ContactsTableProps): ReactElement {
 
   // Card para vista móvil
   const mobileRender = useCallback(
-    (contact: Contact) =>
-      React.createElement(
-        'div',
-        { className: 'flex flex-col gap-1' },
-        // Nombre
-        React.createElement('span', { className: 'font-medium text-sm' }, contact.name),
-        // Tipo · Teléfono
-        React.createElement(
-          'div',
-          { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
-          [formatType(contact.type), contact.phone].filter(Boolean).join(' · ')
-        ),
-        // Email
-        contact.email &&
-          React.createElement(
-            'div',
-            { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
-            contact.email
-          ),
-        // Badge de estado
-        React.createElement(
-          'div',
-          { className: 'mt-1' },
-          React.createElement(
-            UI.Badge,
-            {
-              variant: contact.is_active ? 'success-soft' : 'secondary',
-              size: 'sm',
-            },
-            contact.is_active ? 'Activo' : 'Inactivo'
-          )
-        )
-      ),
+    (contact: Contact) => (
+      <div className="flex flex-col gap-1">
+        {/* Nombre */}
+        <span className="font-medium text-sm">{contact.name}</span>
+        {/* Tipo · Teléfono */}
+        <div className="text-xs" style={{ color: 'var(--cg-text-muted)' }}>
+          {[formatType(contact.type), contact.phone].filter(Boolean).join(' · ')}
+        </div>
+        {/* Email */}
+        {contact.email && (
+          <div className="text-xs" style={{ color: 'var(--cg-text-muted)' }}>
+            {contact.email}
+          </div>
+        )}
+        {/* Badge de estado */}
+        <div className="mt-1">
+          <Badge variant={contact.is_active ? 'success-soft' : 'secondary'} size="sm">
+            {contact.is_active ? 'Activo' : 'Inactivo'}
+          </Badge>
+        </div>
+      </div>
+    ),
     []
   );
 
-  return React.createElement(UI.DataTable, {
-    data,
-    rowKey: (contact: Contact) => contact.id,
-    loading,
-    error: error ?? undefined,
-    onRetry: () => void refetch(),
-    columns: dtColumns,
-    searchPlaceholder: 'Buscar contactos...',
-    searchValue,
-    onSearchChange: handleSearch,
-    filterSections: [
-      {
-        label: 'Tipo',
-        options: ['', 'person', 'company', 'other'].map((type) => ({
-          value: type,
-          label: type === '' ? 'Todos' : formatType(type),
-        })),
-        value: activeTypeFilter,
-        onChange: handleTypeFilter,
-      },
-    ],
-    sortKey,
-    sortDirection: sortDir,
-    onSortChange: handleSort,
-    pagination: {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      total: pagination.total,
-    },
-    onPageChange: goToPage,
-    selectable,
-    selectedIds,
-    onSelectionChange: handleSelectionChange,
-    actions: dtActions,
-    onRowClick,
-    emptyState: {
-      title: emptyMessage,
-      filteredTitle: 'Sin resultados',
-      filteredDescription: 'No se encontraron contactos con los filtros actuales.',
-    },
-    mobileRender,
-    className,
-  });
+  return (
+    <DataTable
+      data={data}
+      rowKey={(contact: Contact) => contact.id}
+      loading={loading}
+      error={error ?? undefined}
+      onRetry={() => void refetch()}
+      columns={dtColumns}
+      searchPlaceholder="Buscar contactos..."
+      searchValue={searchValue}
+      onSearchChange={handleSearch}
+      filterSections={[
+        {
+          label: 'Tipo',
+          options: ['', 'person', 'company', 'other'].map((type) => ({
+            value: type,
+            label: type === '' ? 'Todos' : formatType(type),
+          })),
+          value: activeTypeFilter,
+          onChange: handleTypeFilter,
+        },
+      ]}
+      sortKey={sortKey}
+      sortDirection={sortDir}
+      onSortChange={handleSort}
+      pagination={{
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        total: pagination.total,
+      }}
+      onPageChange={goToPage}
+      selectable={selectable}
+      selectedIds={selectedIds}
+      onSelectionChange={handleSelectionChange}
+      actions={dtActions}
+      onRowClick={onRowClick}
+      emptyState={{
+        title: emptyMessage,
+        filteredTitle: 'Sin resultados',
+        filteredDescription: 'No se encontraron contactos con los filtros actuales.',
+      }}
+      mobileRender={mobileRender}
+      className={className}
+    />
+  );
 }
