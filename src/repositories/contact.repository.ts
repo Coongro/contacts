@@ -13,7 +13,10 @@ import {
 } from '../services/duplicates.js';
 import { assertMergeable, buildMergePatch, type FieldChoices } from '../services/merge.js';
 
-/** Lo que este repositorio usa del contexto del plugin (`PluginContext`). */
+/**
+ * Lo que este repositorio usa del contexto del plugin (`PluginContext`). Otros plugins lo
+ * construyen sin contexto para leer (`new ContactRepository(db)`); `merge` lo necesita.
+ */
 export type ContactRepositoryContext = Pick<PluginContext, 'events'>;
 
 export interface MergeParams {
@@ -59,7 +62,7 @@ export interface CountByTypeResult {
 export class ContactRepository {
   constructor(
     private readonly db: ModuleDatabaseAPI,
-    private readonly context: ContactRepositoryContext
+    private readonly context?: ContactRepositoryContext
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -386,6 +389,11 @@ export class ContactRepository {
    * suyo (oportunidades, actividades, mails…). Todo en una transacción.
    */
   async merge({ winnerId, loserIds, fields }: MergeParams): Promise<ContactRow> {
+    // Sin el evento, los plugins que referencian al perdedor no se enteran: mejor no fusionar.
+    if (!this.context) {
+      throw new Error('ContactRepository.merge necesita el contexto del plugin (events).');
+    }
+    const { events } = this.context;
     const ids = [...new Set(loserIds)];
     return this.db.transaction(async (tx) => {
       const rows = await tx
@@ -432,7 +440,7 @@ export class ContactRepository {
           )})`
         );
 
-      await this.context.events.publish(tx, {
+      await events.publish(tx, {
         type: CONTACT_MERGED_EVENT,
         entityId: winnerId,
         payload: {
