@@ -1,5 +1,11 @@
 # @coongro/contacts
 
+## 1.6.1
+
+### Patch Changes
+
+- El manifest declara con qué acción se borra cada entidad (`deleteAction`), y las vistas regeneradas solo llaman a acciones que existen. No cambia ninguna vista.
+
 ## 1.6.0
 
 ### Minor Changes
