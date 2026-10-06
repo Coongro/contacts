@@ -23,7 +23,8 @@ export const DUPLICATE_THRESHOLD = 60;
 
 export type DuplicateReason = 'email' | 'document' | 'domain' | 'phone' | 'name';
 
-export interface DuplicateCandidate {
+// `type` y no `interface`: son filas de `execute<Row>()`, que pide `Record<string, unknown>`.
+export type DuplicateCandidate = {
   id: string;
   name: string;
   email: string | null;
@@ -32,9 +33,9 @@ export interface DuplicateCandidate {
   updated_at: string;
   score: number;
   reasons: DuplicateReason[];
-}
+};
 
-export interface DuplicatePair {
+export type DuplicatePair = {
   a_id: string;
   a_name: string;
   a_email: string | null;
@@ -45,7 +46,7 @@ export interface DuplicatePair {
   b_phone: string | null;
   score: number;
   reasons: DuplicateReason[];
-}
+};
 
 /** Dominio de un sitio web en SQL: sin protocolo, sin `www.` ni ruta. */
 const domainOf = (column: SQL | string): SQL =>
