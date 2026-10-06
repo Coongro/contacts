@@ -4,12 +4,21 @@
  * Cada acción declara qué acepta (lo que no está, se rechaza: nadie escribe
  * `created_at` ni `deleted_at` desde afuera) y delega en el repositorio.
  *
- * Forma de las respuestas: un registro es un objeto (no `[registro]`) y los
- * listados paginables vienen como `{ items, total }`. Los que todavía llaman
- * como antes reciben la forma vieja mientras la acción declare `legacy`.
+ * Forma de las respuestas: un registro es un objeto (o `null`), las listas que
+ * crecen con la agenda son páginas (`pageInput` → `{ items, total }`) y las
+ * demás, un array.
  */
 
-import { createInsertSchema, mutation, query, z, type Page } from '@coongro/plugin-sdk/actions';
+import {
+  createInsertSchema,
+  listPage,
+  mutation,
+  pageInput,
+  query,
+  z,
+  type Page,
+} from '@coongro/plugin-sdk/actions';
+import { eq, sql } from 'drizzle-orm';
 
 import { ContactRepository } from './repositories/contact.repository.js';
 import { contactTable, type ContactRow } from './schema/contact.js';
@@ -71,8 +80,14 @@ const Paging = {
   offset: z.number().int().nonnegative().optional(),
 };
 
-const SearchInput = z
-  .object({
+/** Columnas por las que se ordenan las listas (las mismas que `search` en el repositorio). */
+const SORTABLE = ['name', 'type', 'kind', 'phone', 'email', 'is_active', 'created_at'] as const;
+/** Columnas de texto donde busca el `search` de una lista. */
+const SEARCHABLE = ['name', 'email', 'phone', 'document_number'] as const;
+
+/** Una página con los filtros de siempre: `query` sigue siendo el texto a buscar (o `search`). */
+const SearchInput = pageInput(
+  {
     query: z.string().optional(),
     type: z.string().optional(),
     kind: z.string().optional(),
@@ -80,31 +95,42 @@ const SearchInput = z
     tags: z.array(z.string()).optional(),
     isActive: z.boolean().optional(),
     includeDeleted: z.boolean().optional(),
-    orderBy: z.string().optional(),
-    orderDir: z.enum(['asc', 'desc']).optional(),
-    ...Paging,
-  })
-  .strict();
+  },
+  { orderBy: [...SORTABLE] }
+);
 
 const destructive = mutation.meta({ effect: 'destructive' });
 
 export const contactActions = {
   list: query
-    .meta({ legacy: 'items' })
-    .input(z.object(Paging).strict().optional())
-    .handler(async ({ input = {}, context }): Promise<Page<ContactRow>> => {
-      const repo = context.repo(ContactRepository);
-      const items = await repo.list(input);
-      // Sin límite vino la agenda entera: el total es lo que vino.
-      const total = input.limit ? await repo.count() : items.length;
-      return { items, total };
-    }),
+    .meta({ page: true })
+    .input(
+      pageInput(
+        {
+          type: z.string().optional(),
+          kind: z.string().optional(),
+          organization_id: Id.optional(),
+          is_active: z.boolean().optional(),
+        },
+        { orderBy: [...SORTABLE] }
+      )
+    )
+    .handler(
+      ({ input, context }): Promise<Page<ContactRow>> =>
+        listPage(context.db, contactTable, input, {
+          search: [...SEARCHABLE],
+          orderBy: [...SORTABLE],
+          filters: ['type', 'kind', 'organization_id', 'is_active'],
+          defaultOrder: { by: 'created_at', dir: 'desc' },
+        })
+    ),
 
   search: query
-    .meta({ legacy: 'items' })
+    .meta({ page: true })
     .input(SearchInput)
-    .handler(async ({ input, context }): Promise<Page<ContactRow>> => {
-      return context.repo(ContactRepository).searchPage(input);
+    .handler(({ input, context }): Promise<Page<ContactRow>> => {
+      const { search, query: text, ...filters } = input;
+      return context.repo(ContactRepository).searchPage({ ...filters, query: text ?? search });
     }),
 
   getById: query
@@ -128,14 +154,32 @@ export const contactActions = {
     ),
 
   findByTag: query
-    .input(z.object({ tag: z.string() }).strict())
-    .handler(({ input, context }) => context.repo(ContactRepository).findByTag(input)),
+    .meta({ page: true })
+    .input(pageInput({ tag: z.string().min(1) }, { orderBy: [...SORTABLE] }))
+    .handler(
+      ({ input, context }): Promise<Page<ContactRow>> =>
+        listPage(context.db, contactTable, input, {
+          search: [...SEARCHABLE],
+          orderBy: [...SORTABLE],
+          defaultOrder: { by: 'name', dir: 'asc' },
+          where: sql`${contactTable.tags} ? ${input.tag}`,
+        })
+    ),
 
   listTags: query.handler(({ context }) => context.repo(ContactRepository).listTags()),
 
   listByOrganization: query
-    .input(z.object({ organizationId: Id }).strict())
-    .handler(({ input, context }) => context.repo(ContactRepository).listByOrganization(input)),
+    .meta({ page: true })
+    .input(pageInput({ organizationId: Id }, { orderBy: [...SORTABLE] }))
+    .handler(
+      ({ input, context }): Promise<Page<ContactRow>> =>
+        listPage(context.db, contactTable, input, {
+          search: [...SEARCHABLE],
+          orderBy: [...SORTABLE],
+          defaultOrder: { by: 'name', dir: 'asc' },
+          where: eq(contactTable.organization_id, input.organizationId),
+        })
+    ),
 
   count: query
     .input(
@@ -174,7 +218,6 @@ export const contactActions = {
     .handler(({ input, context }) => context.repo(ContactRepository).scanDuplicates(input)),
 
   create: mutation
-    .meta({ legacy: 'first' })
     .input(z.object({ data: ContactCreate }).strict())
     .handler(async ({ input, context }) => {
       const [created] = await context.repo(ContactRepository).create(input);
@@ -186,28 +229,21 @@ export const contactActions = {
     .handler(({ input, context }) => context.repo(ContactRepository).bulkCreate(input)),
 
   update: mutation
-    .meta({ legacy: 'first' })
     .input(z.object({ id: Id, data: ContactPatch }).strict())
     .handler(async ({ input, context }) => {
       const [updated] = await context.repo(ContactRepository).update(input);
       return updated ?? null;
     }),
 
-  softDelete: destructive
-    .meta({ legacy: 'first' })
-    .input(ById)
-    .handler(async ({ input, context }) => {
-      const [deleted] = await context.repo(ContactRepository).softDelete(input);
-      return deleted ?? null;
-    }),
+  softDelete: destructive.input(ById).handler(async ({ input, context }) => {
+    const [deleted] = await context.repo(ContactRepository).softDelete(input);
+    return deleted ?? null;
+  }),
 
-  restore: mutation
-    .meta({ legacy: 'first' })
-    .input(ById)
-    .handler(async ({ input, context }) => {
-      const [restored] = await context.repo(ContactRepository).restore(input);
-      return restored ?? null;
-    }),
+  restore: mutation.input(ById).handler(async ({ input, context }) => {
+    const [restored] = await context.repo(ContactRepository).restore(input);
+    return restored ?? null;
+  }),
 
   delete: destructive
     .input(ById)
