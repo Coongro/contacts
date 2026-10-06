@@ -4,6 +4,7 @@
  * entre onFocus y el click handler de Radix Trigger.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import type { ReactElement } from 'react';
 
 import { useContact } from '../hooks/useContact.js';
 import { useContacts } from '../hooks/useContacts.js';
@@ -14,7 +15,7 @@ const React = getHostReact();
 const UI = getHostUI();
 const { useCallback, useEffect } = React;
 
-export function ContactPicker(props: ContactPickerProps) {
+export function ContactPicker(props: ContactPickerProps): ReactElement {
   const {
     filters = {},
     value,
