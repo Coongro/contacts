@@ -37,7 +37,8 @@
           "findDuplicates",
           "scanDuplicates",
           "merge"
-        ]
+        ],
+        "deleteAction": "softDelete"
       }
     ],
     "actionContracts": "./dist/agentic/contracts.js",
