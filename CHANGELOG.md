@@ -1,5 +1,11 @@
 # @coongro/contacts
 
+## 1.9.0
+
+### Minor Changes
+
+- Los contactos nombran sus eventos en el catálogo de los flujos, incluido «Contactos fusionados».
+
 ## 1.8.0
 
 ### Minor Changes
