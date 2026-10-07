@@ -10,6 +10,10 @@
     ]
   },
   "contributes": {
+    "events": {
+      "labels": { "contact": { "label": "Contacto", "gender": "m" } },
+      "custom": [{ "type": "contacts.contact.merged", "label": "Contactos fusionados" }]
+    },
     "menus": [],
     "views": [],
     "actionModules": [
