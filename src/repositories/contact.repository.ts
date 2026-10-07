@@ -43,11 +43,6 @@ export interface SearchParams {
   orderDir?: 'asc' | 'desc';
 }
 
-export interface ListParams {
-  limit?: number;
-  offset?: number;
-}
-
 export interface CountParams {
   type?: string;
   kind?: string;
@@ -69,26 +64,6 @@ export class ContactRepository {
   // ---------------------------------------------------------------------------
   // CRUD base
   // ---------------------------------------------------------------------------
-
-  /**
-   * Sin paginación por defecto: billing, maintenance, leases y otros kits esperan la
-   * agenda completa. `limit`/`offset` solo aplican si se pasan.
-   */
-  async list({ limit, offset }: ListParams = {}): Promise<ContactRow[]> {
-    return this.db.ormQuery((tx) => {
-      let q = tx.select().from(contactTable).where(isNull(contactTable.deleted_at));
-      if (limit || offset) {
-        q = q.orderBy(desc(contactTable.created_at), asc(contactTable.id)) as typeof q;
-      }
-      if (limit) {
-        q = q.limit(limit) as typeof q;
-      }
-      if (offset) {
-        q = q.offset(offset) as typeof q;
-      }
-      return q;
-    });
-  }
 
   async getById({ id }: { id: string }): Promise<ContactRow | undefined> {
     const rows = await this.db.ormQuery((tx) =>
@@ -254,23 +229,6 @@ export class ContactRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Organizaciones
-  // ---------------------------------------------------------------------------
-
-  /** Las personas (o lo que sea) que pertenecen a una organización. */
-  async listByOrganization({ organizationId }: { organizationId: string }): Promise<ContactRow[]> {
-    return this.db.ormQuery((tx) =>
-      tx
-        .select()
-        .from(contactTable)
-        .where(
-          and(eq(contactTable.organization_id, organizationId), isNull(contactTable.deleted_at))
-        )
-        .orderBy(asc(contactTable.name))
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // Tags
   // ---------------------------------------------------------------------------
 
@@ -284,15 +242,6 @@ export class ContactRepository {
       `)
     );
     return rows.map((r) => r.tag);
-  }
-
-  async findByTag({ tag }: { tag: string }): Promise<ContactRow[]> {
-    return this.db.ormQuery((tx) =>
-      tx
-        .select()
-        .from(contactTable)
-        .where(and(sql`${contactTable.tags} ? ${tag}`, isNull(contactTable.deleted_at)))
-    );
   }
 
   // ---------------------------------------------------------------------------
